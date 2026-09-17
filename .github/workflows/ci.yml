@@ -31,6 +31,9 @@ jobs:
       - name: Run harness
         run: luajit tests/harness.lua .
 
+      - name: Run minimap test
+        run: luajit tests/minimap.lua .
+
       # The .toc drives what the client loads, so a missing file is fatal.
       - name: Verify .toc references resolve
         run: |

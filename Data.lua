@@ -29,8 +29,7 @@ local SECONDS_PER_DAY = 86400
 local DB_DEFAULTS = {
     characters = {},
     settings = {
-        minimapPos = 225,
-        showMinimap = true,
+        showMinimap = true,  -- button position/visibility: settings.minimap (LibDBIcon)
         theme = "dashboard_cards",
         language = nil,  -- nil = auto (game locale)
     },

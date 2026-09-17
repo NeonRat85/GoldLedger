@@ -7,21 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- **Minimap button tooltip and clicks not working reliably.** The button set its
-  strata and level without fixing them, so when the toplevel minimap cluster
-  re-layered its children the button could drop beneath the minimap, which then
-  took the mouse. Strata and level are now fixed, as LibDBIcon does. The border
-  was also drawn larger than, and offset from, the clickable area; the size and
-  layout now match LibDBIcon so the visible ring and the hit area line up.
-- Dragging used `UIParent`'s scale against `Minimap` coordinates, placing the
-  button wrongly when the minimap is resized in Edit Mode.
-
 ### Changed
 
-- The minimap button highlights on hover, hides its tooltip while dragging, and
-  only runs an `OnUpdate` handler during a drag instead of every frame.
+- **Minimap button now uses LibDBIcon-1.0.** The hand-built button is replaced by
+  a LibDataBroker-1.1 launcher drawn by LibDBIcon, the library most addons use for
+  minimap buttons. It behaves like the others: consistent hover and click, drag to
+  move, round and square minimap shapes, and support for minimap button managers
+  and broker displays. LibStub, CallbackHandler-1.0, LibDataBroker-1.1 and
+  LibDBIcon-1.0 are embedded under `Libs/` (see `Libs/README.md` for versions and
+  licences).
+- Button position and visibility are stored in `GoldLedgerDB.settings.minimap`
+  (LibDBIcon's `{ minimapPos, hide }`). Existing `minimapPos`, `showMinimap` and
+  `minimapHidden` values are migrated on first load.
+
+### Fixed
+
+- **Minimap button tooltip and clicks not working reliably.** The old button set
+  its strata and level without fixing them, so re-layering of the toplevel
+  minimap cluster could drop it beneath the minimap, which then took the mouse.
+  Its border was also larger than, and offset from, the clickable area.
+- The minimap setting could disagree with what was shown after a reload, because
+  the Settings checkbox and the button saved visibility under different keys.
 
 ## [2.5.0]
 

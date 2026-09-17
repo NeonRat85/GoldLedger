@@ -12,6 +12,7 @@ This is a fork of [GoldLedger](https://www.curseforge.com/wow/addons/goldledger)
 
 - **Warband bank deposits and withdrawals are transfers, not expenses or income.** They show in the transaction list tagged *Bank* but don't affect totals, charts or session stats.
 - **Warband bank balance** is shown under *On Hand* and in the minimap tooltip, and counts towards your goal.
+- **Minimap button uses LibDBIcon**, so it behaves like other addons' buttons and works with minimap button managers.
 - **Guild bank** gold is labelled *Guild* instead of *Other*. It still counts as income/expense, because gold given to the guild is no longer yours.
 
 ## Features
@@ -56,10 +57,13 @@ Requires [LuaJIT](https://luajit.org/), which implements Lua 5.1 like the WoW cl
 
 ```bash
 luajit tests/harness.lua .
+luajit tests/minimap.lua .
 ```
 
-The harness loads the addon's real core files against a minimal WoW API stub and drives gold changes through `PLAYER_MONEY`. CI runs it along with a syntax check of every Lua file and a check that every file listed in `GoldLedger.toc` exists.
+`tests/harness.lua` loads the addon's real core files against a minimal WoW API stub and drives gold changes through `PLAYER_MONEY`. `tests/minimap.lua` loads the embedded libraries and the minimap module, and checks registration, the tooltip, visibility and settings migration. CI runs both, along with a syntax check of every Lua file and a check that every file listed in `GoldLedger.toc` exists.
 
 ## License
 
 MIT. Original work © tum24; modifications © NeonRat85. See [LICENSE](LICENSE).
+
+Embedded libraries in `Libs/` keep their own licences: LibStub and LibDataBroker-1.1 are public domain; CallbackHandler-1.0 and LibDBIcon-1.0 use the Ace3 BSD licence. See [Libs/README.md](Libs/README.md).
