@@ -40,7 +40,8 @@ jobs:
             case "$line" in
               \#*|"") continue ;;
             esac
-            file=${line//\//}
+            # WoW .toc files use backslash paths
+            file=$(printf '%s' "$line" | tr '\\' '/')
             if [ ! -f "$file" ]; then
               echo "::error::.toc references missing file: $file"
               status=1
