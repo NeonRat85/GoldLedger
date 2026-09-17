@@ -1006,5 +1006,12 @@ function UI:OnEnable()
             local MF = ns.UI_MainFrame
             if MF then MF.UpdateSummaries() end
         end)
+        -- An existing entry gained details (e.g. vendor sale item names)
+        GoldLedger.Events:On("ENTRIES_UPDATED", function()
+            local MF = ns.UI_MainFrame
+            if MF then MF.UpdateSummaries() end
+            local History = ns.History and ns.History.Frame
+            if History and History.Update then History:Update() end
+        end)
     end
 end

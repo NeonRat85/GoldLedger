@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Item names for vendor sales.** Vendor income is matched to the merchant's
+  buyback list by exact sale price, so entries record what was sold and how
+  many, whether sold by right-click, drag, Sell Junk or a vendoring addon.
+  Several items sold in one go (such as Sell Junk) are recorded together.
+  Entries gain `itemName`, `quantity`, `vendorType = "sale"` and, for multiple
+  items, `items`. Sales that can't be matched within 5 seconds stay unnamed.
+- Item names (auction and vendor) are shown in the main window and History
+  transaction lists.
+- `Data:AddEntry` returns the stored entry, and an `ENTRIES_UPDATED` event
+  refreshes the UI when an entry gains details after it was logged.
+
 ### Changed
 
 - **Minimap button now uses LibDBIcon-1.0.** The hand-built button is replaced by

@@ -171,6 +171,7 @@ end
 --- @param source string|nil Источник: "vendor", "ah", "mail", "quest", "loot", "trade", "unknown"
 --- @param meta table|nil Опциональные метаданные { itemName, ahType, quantity, unitPrice, grossAmount, cutAmount }
 ---                       Ядро хранит их прозрачно, не интерпретирует. Используется модулями (AuctionTracker).
+--- @return table|nil The stored entry (callers may annotate it, e.g. vendor sale item names)
 function Data:AddEntry(amount, source, meta)
     if amount == 0 then return end
 
@@ -210,6 +211,8 @@ function Data:AddEntry(amount, source, meta)
         charData.monthly[monthKey] = { income = 0, expense = 0 }
     end
     charData.monthly[monthKey][entryType] = charData.monthly[monthKey][entryType] + absAmount
+
+    return entry
 end
 
 --- Ограничение размера: удаляем самые старые

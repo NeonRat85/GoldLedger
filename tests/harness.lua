@@ -45,6 +45,11 @@ function WithdrawGuildBankMoney(amt) money = money + amt end
 function RepairAllItems() end
 function TakeInboxMoney() end
 function GetInboxHeaderInfo() end
+-- Merchant buyback list, newest last: { name, price, quantity }
+local buyback = {}
+function GetNumBuybackItems() return #buyback end
+function GetBuybackItemInfo(i) local b = buyback[i]; if b then return b[1], 0, b[2], b[3] end end
+function wipe(t) for k in pairs(t) do t[k] = nil end return t end
 print = print
 
 -- ---- Load the addon's real core files ----------------------------------------
@@ -130,5 +135,55 @@ check("history transfer filter", f.total == 2)
 Data:SetGoal(money + 650000)
 check("goal counts warband bank", Data:GetGoalProgress().progress == 1)
 check("source locale keys", Tracker:GetSourceLocaleKey("bank") == "SRC_BANK" and ns.L["SRC_GUILDBANK"] == "Guild")
+
+-- 9. Vendor sales are named from the buyback list
+local entriesUpdated = 0
+GL.Events:On("ENTRIES_UPDATED", function() entriesUpdated = entriesUpdated + 1 end)
+buyback = { { "Linen Cloth", 2000, 20 } }          -- sold on an earlier visit
+fire("MERCHANT_SHOW")
+local function sell(name, price, qty) buyback[#buyback + 1] = { name, price, qty }; money = money + price end
+
+-- money first, buyback list updates after
+money = money + 2000; fire("PLAYER_MONEY")
+local sale = last()
+check("vendor sale logged before buyback update", sale.type == "income" and sale.source == "vendor" and sale.itemName == nil)
+buyback[#buyback + 1] = { "Linen Cloth", 2000, 20 }; fire("MERCHANT_UPDATE")
+check("named once buyback updates (identical to an older sale)", sale.itemName == "Linen Cloth (20)" and sale.quantity == 20 and sale.vendorType == "sale")
+check("UI told the entry changed", entriesUpdated == 1)
+
+-- buyback list first, money after
+buyback[#buyback + 1] = { "Frostweave Cloth", 13350, 1 }; fire("MERCHANT_UPDATE")
+money = money + 13350; fire("PLAYER_MONEY")
+check("named immediately when buyback is already updated", last().itemName == "Frostweave Cloth" and last().quantity == 1)
+
+-- Sell Junk: several items, one money change
+buyback[#buyback + 1] = { "Broken Fang", 105, 3 }
+buyback[#buyback + 1] = { "Torn Pelt", 240, 1 }
+buyback[#buyback + 1] = { "Cracked Bone", 55, 2 }
+buyback[#buyback + 1] = { "Frayed Rope", 10, 1 }
+buyback[#buyback + 1] = { "Dull Shard", 15, 1 }
+money = money + 425; fire("PLAYER_MONEY")
+local junk = last()
+check("sell junk names several items", junk.items and #junk.items == 5
+    and junk.itemName == "Dull Shard, Frayed Rope, Cracked Bone (2) +2 more")
+
+-- An amount with no matching item stays unnamed, then expires without blocking later sales
+money = money + 777; fire("PLAYER_MONEY")
+local odd = last()
+now = now + 6
+sell("Iron Ore", 900, 17); fire("PLAYER_MONEY")
+check("unmatched sale stays unnamed", odd.itemName == nil)
+check("later sale still matched after expiry", last().itemName == "Iron Ore (17)")
+
+-- Spending at the vendor is untouched
+money = money - 5000; fire("PLAYER_MONEY")
+check("vendor purchase not named", last().type == "expense" and last().itemName == nil)
+fire("MERCHANT_CLOSED")
+
+-- Reopening: everything already in the list counts as old
+fire("MERCHANT_SHOW")
+money = money + 900; fire("PLAYER_MONEY")
+check("old buyback items not reused on a new visit", last().itemName == nil)
+fire("MERCHANT_CLOSED")
 
 os.exit(fails == 0 and 0 or 1)

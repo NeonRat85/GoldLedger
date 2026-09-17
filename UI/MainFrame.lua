@@ -385,9 +385,16 @@ local function CreateEntryRow(parent, index)
     row.amountText = coreUI:CreateLabel(row, { justify = "RIGHT" })
     row.amountText:SetPoint("RIGHT", row, "RIGHT", -4, 0)
 
+    -- Item name(s) for AH and vendor sales, between the source tag and amount
+    row.detailText = coreUI:CreateLabel(row, { justify = "LEFT", color = "LABEL" })
+    row.detailText:SetPoint("LEFT", row.sourceTag, "RIGHT", 4, 0)
+    row.detailText:SetPoint("RIGHT", row.amountText, "LEFT", -8, 0)
+    row.detailText:SetWordWrap(false)
+
     function row:SetEntry(entry)
         self.timeText:SetText(date(L["TIME_FORMAT"], entry.timestamp))
         self.amountText:SetText(H.GoldFormatter.Colored(entry.amount, entry.type, entry.direction))
+        self.detailText:SetText(entry.itemName or "")
 
         local source = entry.source or "unknown"
         local Tracker = GoldLedger:GetModule("Tracker")

@@ -50,6 +50,12 @@ local function CreateEntryRow(parent, index)
     row.amountText = ui:CreateLabel(row, { justify = "RIGHT" })
     row.amountText:SetPoint("RIGHT", row, "RIGHT", -4, 0)
 
+    -- Item name(s) for AH and vendor sales, between the source tag and amount
+    row.detailText = ui:CreateLabel(row, { justify = "LEFT", color = "LABEL" })
+    row.detailText:SetPoint("LEFT", row.sourceTag, "RIGHT", 4, 0)
+    row.detailText:SetPoint("RIGHT", row.amountText, "LEFT", -8, 0)
+    row.detailText:SetWordWrap(false)
+
     function row:SetEntry(entry)
         local helpers = H()
         local GL = ns.GoldLedger
@@ -59,6 +65,7 @@ local function CreateEntryRow(parent, index)
         if helpers and helpers.GoldFormatter then
             self.amountText:SetText(helpers.GoldFormatter.Colored(entry.amount, entry.type, entry.direction))
         end
+        self.detailText:SetText(entry.itemName or "")
 
         local source = entry.source or "unknown"
         local Tracker = GL and GL:GetModule("Tracker")

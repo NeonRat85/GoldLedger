@@ -174,6 +174,134 @@ local function TakeMatchingBankOp(absAmount, entryType)
     return nil
 end
 
+-------------------------------------------------------------------------------
+-- Vendor sales: item names from the merchant buyback list
+-------------------------------------------------------------------------------
+-- Every item sold to a vendor lands in the buyback list (newest last) with its
+-- name, quantity and total sale price, whatever the sell method: right-click,
+-- drag, Sell Junk or a vendoring addon. PLAYER_MONEY and the list update can
+-- arrive in either order, so vendor income entries wait in pendingVendorSales
+-- until a matching new buyback item appears, or expire.
+local VENDOR_MATCH_TIMEOUT = 5
+local buybackBaseline = {}      -- [signature] = copies already in the list or claimed
+local pendingVendorSales = {}   -- { entry = <Data entry>, amount = copper, time = GetTime() }
+
+local function BuybackSignature(name, price, quantity)
+    return name .. "\031" .. price .. "\031" .. quantity
+end
+
+--- Current buyback list, newest first
+local function ReadBuyback()
+    local items, counts = {}, {}
+    local num = GetNumBuybackItems and GetNumBuybackItems() or 0
+    for i = num, 1, -1 do
+        local name, _, price, quantity = GetBuybackItemInfo(i)
+        if name and price and price > 0 then
+            quantity = quantity or 1
+            local sig = BuybackSignature(name, price, quantity)
+            counts[sig] = (counts[sig] or 0) + 1
+            items[#items + 1] = { sig = sig, name = name, price = price, quantity = quantity }
+        end
+    end
+    return items, counts
+end
+
+--- Everything already in the buyback list when the merchant opens was sold earlier
+local function ResetBuybackBaseline()
+    local _, counts = ReadBuyback()
+    buybackBaseline = counts
+    wipe(pendingVendorSales)
+end
+
+--- Buyback items not yet matched to a sale, newest first. For each signature the
+--- newest (count - baseline) copies are new.
+local function GetUnclaimedBuyback()
+    local items, counts = ReadBuyback()
+    local seen, unclaimed = {}, {}
+    for _, item in ipairs(items) do
+        -- The list holds 12 items; older copies drop off the end as new ones arrive
+        if (buybackBaseline[item.sig] or 0) > counts[item.sig] then
+            buybackBaseline[item.sig] = counts[item.sig]
+        end
+        seen[item.sig] = (seen[item.sig] or 0) + 1
+        if seen[item.sig] <= counts[item.sig] - (buybackBaseline[item.sig] or 0) then
+            unclaimed[#unclaimed + 1] = item
+        end
+    end
+    return unclaimed
+end
+
+local function ItemLabel(item)
+    return item.quantity > 1 and ("%s (%d)"):format(item.name, item.quantity) or item.name
+end
+
+--- Matches pending vendor income to new buyback items and names the entries
+local function ResolveVendorSales()
+    if #pendingVendorSales == 0 then return end
+    local unclaimed = GetUnclaimedBuyback()
+    local now = GetTime()
+    local updated = false
+
+    local i = 1
+    while i <= #pendingVendorSales do
+        local sale = pendingVendorSales[i]
+        local matched
+
+        for _, item in ipairs(unclaimed) do
+            if not item.claimed and item.price == sale.amount then
+                matched = { item }
+                break
+            end
+        end
+
+        -- One money change for several items at once (e.g. Sell Junk)
+        if not matched then
+            local total, group = 0, {}
+            for _, item in ipairs(unclaimed) do
+                if not item.claimed then
+                    total = total + item.price
+                    group[#group + 1] = item
+                end
+            end
+            if #group > 1 and total == sale.amount then matched = group end
+        end
+
+        if matched then
+            local entry = sale.entry
+            entry.vendorType = "sale"
+            for _, item in ipairs(matched) do
+                item.claimed = true
+                buybackBaseline[item.sig] = (buybackBaseline[item.sig] or 0) + 1
+            end
+            if #matched == 1 then
+                entry.itemName = ItemLabel(matched[1])
+                entry.quantity = matched[1].quantity
+            else
+                local names = {}
+                entry.items = {}
+                for n, item in ipairs(matched) do
+                    if n <= 3 then names[#names + 1] = ItemLabel(item) end
+                    entry.items[n] = { name = item.name, quantity = item.quantity, price = item.price }
+                end
+                local more = #matched - 3
+                entry.itemName = table.concat(names, ", ") .. (more > 0 and (" +%d more"):format(more) or "")
+            end
+            GoldLedger:Debug("Tracker", "Vendor sale matched:", entry.itemName, "| amount:", sale.amount)
+            table.remove(pendingVendorSales, i)
+            updated = true
+        elseif now - sale.time > VENDOR_MATCH_TIMEOUT then
+            GoldLedger:Debug("Tracker", "Vendor sale unmatched, giving up | amount:", sale.amount)
+            table.remove(pendingVendorSales, i)
+        else
+            i = i + 1
+        end
+    end
+
+    if updated then
+        GoldLedger.Events:Emit("ENTRIES_UPDATED")
+    end
+end
+
 --- Обрабатывает изменение голды
 local function ProcessGoldChange()
     if not isReady then return end
@@ -254,14 +382,18 @@ local function ProcessGoldChange()
 
     -- Логируем через Data
     local Data = GoldLedger:GetModule("Data")
-    if Data then
-        Data:AddEntry(delta, source)
-    end
+    local entry = Data and Data:AddEntry(delta, source)
 
     -- Уведомляем подписчиков
     NotifyChange(absAmount, entryType, currentGold, source)
 
     lastGold = currentGold
+
+    -- Name the item(s) sold, now or when the buyback list catches up
+    if entry and source == "vendor" and entryType == "income" then
+        table.insert(pendingVendorSales, { entry = entry, amount = absAmount, time = GetTime() })
+        ResolveVendorSales()
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -323,6 +455,11 @@ function Tracker:OnEnable()
     end
     GoldLedger:RegisterEvent("ACCOUNT_MONEY", RefreshWarbandBank)
     GoldLedger:RegisterEvent("BANKFRAME_OPENED", RefreshWarbandBank)
+
+    -- Vendor sale item names (buyback list)
+    GoldLedger:RegisterEvent("MERCHANT_SHOW", ResetBuybackBaseline)
+    GoldLedger:RegisterEvent("MERCHANT_UPDATE", ResolveVendorSales)
+    GoldLedger:RegisterEvent("MERCHANT_CLOSED", function() wipe(pendingVendorSales) end)
 
     -- Подписка на изменение голды
     GoldLedger:RegisterEvent("PLAYER_MONEY", function()
