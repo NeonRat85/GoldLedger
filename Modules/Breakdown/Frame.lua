@@ -86,7 +86,7 @@ function Frame:Create()
     local f = ui:CreatePopup({
         name  = "GoldLedgerBreakdownFrame",
         title = l["BREAKDOWN_TITLE"],
-        width = 380, height = 380,
+        width = 380, height = 432,  -- +2 source rows (bank, guild bank)
     })
 
     -- Period buttons

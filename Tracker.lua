@@ -30,6 +30,12 @@ local repairPending = false -- Флаг: была вызвана RepairAllItems(
 -- specific mail the player just opened (instead of guessing from inbox state).
 local pendingMailQueue = {}
 
+-- Bank money moves captured by hooks on C_Bank.DepositMoney/WithdrawMoney and
+-- the guild bank equivalents. Each is matched to the PLAYER_MONEY that follows
+-- by exact amount and direction; stale entries expire after BANK_OP_TIMEOUT.
+local pendingBankOps = {}
+local BANK_OP_TIMEOUT = 10
+
 -------------------------------------------------------------------------------
 -- State Pattern: контекст источника транзакции
 -- Отслеживаем какой UI открыт, чтобы определить откуда пришли деньги
@@ -60,6 +66,12 @@ local SOURCE_EVENTS = {
     -- Loot
     LOOT_OPENED             = "loot",
     LOOT_CLOSED             = "clear",
+
+    -- Bank (bank tab purchases etc.; deposits/withdrawals are matched via hooks)
+    BANKFRAME_OPENED        = "bank",
+    BANKFRAME_CLOSED        = "clear",
+    GUILDBANKFRAME_OPENED   = "guildbank",
+    GUILDBANKFRAME_CLOSED   = "clear",
 }
 
 --- Возвращает текущий определённый источник
@@ -80,6 +92,8 @@ function Tracker:GetSourceLocaleKey(source)
         quest   = "SRC_QUEST",
         loot    = "SRC_LOOT",
         trade   = "SRC_TRADE",
+        bank    = "SRC_BANK",
+        guildbank = "SRC_GUILDBANK",
         unknown = "SRC_UNKNOWN",
     }
     return map[source] or "SRC_UNKNOWN"
@@ -130,6 +144,36 @@ function Tracker:ResetSession()
     sessionExpense = 0
 end
 
+--- Queues a bank money move captured by a hook
+--- @param bank string "account"|"guild"
+--- @param kind string "deposit"|"withdraw"
+--- @param amount number copper
+local function QueueBankOp(bank, kind, amount)
+    if type(amount) ~= "number" or amount <= 0 then return end
+    table.insert(pendingBankOps, { bank = bank, kind = kind, amount = amount, time = GetTime() })
+    GoldLedger:Debug("Tracker", "Bank op captured:", bank, kind, amount)
+end
+
+--- Removes and returns the pending bank op matching this gold change, if any
+--- @param absAmount number
+--- @param entryType string "income"|"expense"
+--- @return table|nil
+local function TakeMatchingBankOp(absAmount, entryType)
+    local now = GetTime()
+    local wantKind = entryType == "expense" and "deposit" or "withdraw"
+    for i = #pendingBankOps, 1, -1 do
+        if now - pendingBankOps[i].time > BANK_OP_TIMEOUT then
+            table.remove(pendingBankOps, i)
+        end
+    end
+    for i, op in ipairs(pendingBankOps) do
+        if op.kind == wantKind and op.amount == absAmount then
+            return table.remove(pendingBankOps, i)
+        end
+    end
+    return nil
+end
+
 --- Обрабатывает изменение голды
 local function ProcessGoldChange()
     if not isReady then return end
@@ -145,6 +189,23 @@ local function ProcessGoldChange()
     local absAmount = math.abs(delta)
     local entryType = delta > 0 and "income" or "expense"
     local source = currentSource
+
+    -- Bank deposit/withdrawal. Warband bank gold is still the player's, so it's
+    -- logged as a transfer (not income/expense). Guild bank gold isn't, so it
+    -- stays income/expense but is labelled as guild bank.
+    local bankOp = TakeMatchingBankOp(absAmount, entryType)
+    if bankOp and bankOp.bank == "account" then
+        GoldLedger:Debug("Tracker", "transfer | warband bank", bankOp.kind, "| delta:", delta)
+        local Data = GoldLedger:GetModule("Data")
+        if Data then
+            Data:AddTransfer(delta, "bank")
+        end
+        lastGold = currentGold
+        NotifyChange(absAmount, "transfer", currentGold, "bank")
+        return
+    elseif bankOp then
+        source = "guildbank"
+    end
 
     -- Детект ремонта: если у вендора, расход и был вызван RepairAllItems()
     if source == "vendor" and entryType == "expense" and repairPending then
@@ -233,6 +294,35 @@ function Tracker:OnEnable()
             GoldLedger:Debug("Tracker", "TakeInboxMoney captured:", sender, "money:", money)
         end
     end)
+
+    -- Warband bank money (C_Bank, Enum.BankType.Account)
+    if C_Bank and Enum and Enum.BankType then
+        hooksecurefunc(C_Bank, "DepositMoney", function(bankType, amount)
+            if bankType == Enum.BankType.Account then QueueBankOp("account", "deposit", amount) end
+        end)
+        hooksecurefunc(C_Bank, "WithdrawMoney", function(bankType, amount)
+            if bankType == Enum.BankType.Account then QueueBankOp("account", "withdraw", amount) end
+        end)
+    end
+
+    -- Guild bank money
+    if DepositGuildBankMoney then
+        hooksecurefunc("DepositGuildBankMoney", function(amount) QueueBankOp("guild", "deposit", amount) end)
+    end
+    if WithdrawGuildBankMoney then
+        hooksecurefunc("WithdrawGuildBankMoney", function(amount) QueueBankOp("guild", "withdraw", amount) end)
+    end
+
+    -- Warband bank balance: cache it and let the UI refresh
+    local function RefreshWarbandBank()
+        local Data = GoldLedger:GetModule("Data")
+        if Data then
+            Data:RefreshWarbandBankMoney()
+        end
+        GoldLedger.Events:Emit("WARBAND_BANK_UPDATED")
+    end
+    GoldLedger:RegisterEvent("ACCOUNT_MONEY", RefreshWarbandBank)
+    GoldLedger:RegisterEvent("BANKFRAME_OPENED", RefreshWarbandBank)
 
     -- Подписка на изменение голды
     GoldLedger:RegisterEvent("PLAYER_MONEY", function()

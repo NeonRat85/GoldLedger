@@ -1,11 +1,12 @@
 ## Interface: 120100
 ## Title: GoldLedger
 ## Notes: Gold income/expense tracker with themes and multi-language support | Трекер голды с темами и мультиязычностью
-## Author: ivano
-## Version: 2.4.4
+## Author: ivano (fork by NeonRat85)
+## Version: 2.5.0
 ## SavedVariables: GoldLedgerDB
+## X-Website: https://github.com/NeonRat85/GoldLedger
+## X-Original-Website: https://www.curseforge.com/wow/addons/goldledger
 ## IconTexture: Interface\Icons\INV_Misc_Coin_01
-## X-Curse-Project-ID: 1483715
 
 Locale.lua
 Core.lua

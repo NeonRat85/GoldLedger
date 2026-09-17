@@ -71,6 +71,12 @@ local defaultStrings = {
     ["SRC_TRADE"]           = "Trade",
     ["SRC_REPAIR"]          = "Repair",
     ["SRC_UNKNOWN"]         = "Other",
+    ["SRC_BANK"]            = "Bank",
+    ["SRC_GUILDBANK"]       = "Guild",
+
+    -- Warband bank
+    ["WARBAND_BANK"]        = "Warband Bank",
+    ["WARBAND_BANK_LINE"]   = "Warband Bank: %s",
 
     -- Goal
     ["HEADER_GOAL"]          = "Goal",
@@ -166,6 +172,12 @@ local ruStrings = {
     ["SRC_TRADE"]           = "Обмен",
     ["SRC_REPAIR"]          = "Ремонт",
     ["SRC_UNKNOWN"]         = "Другое",
+    ["SRC_BANK"]            = "Банк",
+    ["SRC_GUILDBANK"]       = "Гильдия",
+
+    -- Warband bank
+    ["WARBAND_BANK"]        = "Банк отряда",
+    ["WARBAND_BANK_LINE"]   = "Банк отряда: %s",
 
     -- Goal
     ["HEADER_GOAL"]          = "Цель",

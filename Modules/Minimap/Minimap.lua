@@ -119,6 +119,12 @@ local function CreateButton()
                 L and L["HEADER_EXPENSE"] or "Expense", GoldFormatter.Full(month.expense),
                 T("LABEL")[1], T("LABEL")[2], T("LABEL")[3],
                 T("EXPENSE")[1], T("EXPENSE")[2], T("EXPENSE")[3])
+
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddDoubleLine(
+                L and L["WARBAND_BANK"] or "Warband Bank", GoldFormatter.Full(Data:GetWarbandBankMoney()),
+                T("LABEL")[1], T("LABEL")[2], T("LABEL")[3],
+                T("TRANSFER")[1], T("TRANSFER")[2], T("TRANSFER")[3])
         end
 
         GameTooltip:AddLine(" ")

@@ -222,6 +222,11 @@ local function CreateMainFrame()
     })
     f.onHandValue:SetPoint("TOP", f.onHandLabel, "BOTTOM", 0, -4)
 
+    f.warbandBankValue = coreUI:CreateLabel(goalCard, {
+        font = "GameFontHighlightSmall", justify = "CENTER", color = "LABEL",
+    })
+    f.warbandBankValue:SetPoint("TOP", f.onHandValue, "BOTTOM", 0, -3)
+
     ---- Divider --------------------------------------------------------------
     f.goalDivider = H.MakeSeparator(goalCard, -78)
 
@@ -289,6 +294,8 @@ local function CreateMainFrame()
         { key = "quest",   localeKey = "SRC_QUEST" },
         { key = "loot",    localeKey = "SRC_LOOT" },
         { key = "trade",   localeKey = "SRC_TRADE" },
+        { key = "bank",    localeKey = "SRC_BANK" },
+        { key = "guildbank", localeKey = "SRC_GUILDBANK" },
         { key = "unknown", localeKey = "SRC_UNKNOWN" },
     }
 
@@ -380,7 +387,7 @@ local function CreateEntryRow(parent, index)
 
     function row:SetEntry(entry)
         self.timeText:SetText(date(L["TIME_FORMAT"], entry.timestamp))
-        self.amountText:SetText(H.GoldFormatter.Colored(entry.amount, entry.type))
+        self.amountText:SetText(H.GoldFormatter.Colored(entry.amount, entry.type, entry.direction))
 
         local source = entry.source or "unknown"
         local Tracker = GoldLedger:GetModule("Tracker")
@@ -638,6 +645,7 @@ local function UpdateSummaries()
 
     local currentGold = GetMoney() or 0
     mainFrame.onHandValue:SetText(H.GoldFormatter.Full(currentGold))
+    mainFrame.warbandBankValue:SetText(L["WARBAND_BANK_LINE"]:format(H.GoldFormatter.Full(Data:GetWarbandBankMoney())))
 
     local today = Data:GetDailySummary()
     mainFrame.todayIncome:SetValue(H.GoldFormatter.Abbrev(today.income), TC("INCOME"))

@@ -198,11 +198,7 @@ function Data:AddEntry(amount, source, meta)
         entry.cutAmount   = meta.cutAmount
     end
     table.insert(charData.entries, entry)
-
-    -- Ограничение размера: удаляем самые старые
-    while #charData.entries > MAX_ENTRIES do
-        table.remove(charData.entries, 1)
-    end
+    self:TrimEntries(charData)
 
     -- 2. Обновить дневной итог
     if not charData.daily[dateKey] then
@@ -215,6 +211,51 @@ function Data:AddEntry(amount, source, meta)
         charData.monthly[monthKey] = { income = 0, expense = 0 }
     end
     charData.monthly[monthKey][entryType] = charData.monthly[monthKey][entryType] + absAmount
+end
+
+--- Ограничение размера: удаляем самые старые
+function Data:TrimEntries(charData)
+    while #charData.entries > MAX_ENTRIES do
+        table.remove(charData.entries, 1)
+    end
+end
+
+--- Records a move of gold between the character and a bank it still owns
+--- (warband bank). Logged with type "transfer" so it shows in the transaction
+--- list but is excluded from income/expense totals, charts and session stats.
+--- @param amount number Copper delta on the character (negative = deposit, positive = withdrawal)
+--- @param source string|nil Source key, default "bank"
+function Data:AddTransfer(amount, source)
+    if amount == 0 then return end
+
+    local charData = self:EnsureCharacterData()
+    table.insert(charData.entries, {
+        timestamp = time(),
+        amount    = math.abs(amount),
+        type      = "transfer",
+        direction = amount < 0 and "deposit" or "withdraw",
+        source    = source or "bank",
+    })
+    self:TrimEntries(charData)
+end
+
+-------------------------------------------------------------------------------
+-- Warband bank balance (account-wide, so stored outside per-character data)
+-------------------------------------------------------------------------------
+
+--- Caches the warband bank balance from the server
+function Data:RefreshWarbandBankMoney()
+    if not (C_Bank and C_Bank.FetchDepositedMoney and Enum and Enum.BankType) then return end
+    local amount = C_Bank.FetchDepositedMoney(Enum.BankType.Account)
+    if type(amount) ~= "number" then return end
+    GoldLedgerDB.warbandBank = { amount = amount, updated = time() }
+end
+
+--- Last known warband bank balance in copper (0 if never seen)
+--- @return number
+function Data:GetWarbandBankMoney()
+    local wb = GoldLedgerDB and GoldLedgerDB.warbandBank
+    return wb and wb.amount or 0
 end
 
 --- Возвращает итоги за день
@@ -370,7 +411,8 @@ function Data:GetGoalProgress()
     local goal = self:GetGoal()
     if goal <= 0 then return nil end
 
-    local currentGold = GetMoney() or 0
+    -- Gold moved into the warband bank still counts towards the goal
+    local currentGold = (GetMoney() or 0) + self:GetWarbandBankMoney()
     local progress = currentGold / goal
     local remaining = goal - currentGold
 
@@ -457,7 +499,7 @@ end
 -------------------------------------------------------------------------------
 
 --- Все источники в порядке отображения
-Data.ALL_SOURCES = {"vendor", "repair", "ah", "mail", "quest", "loot", "trade", "unknown"}
+Data.ALL_SOURCES = {"vendor", "repair", "ah", "mail", "quest", "loot", "trade", "bank", "guildbank", "unknown"}
 
 --- Возвращает разбивку по источникам за период
 --- @param period string "today"|"week"|"month"|"all"
@@ -487,7 +529,8 @@ function Data:GetSourceBreakdown(period)
     local grandTotals = { income = 0, expense = 0 }
 
     for _, entry in ipairs(charData.entries) do
-        if entry.timestamp >= cutoff then
+        -- Bank transfers are neither income nor expense
+        if entry.timestamp >= cutoff and entry.type ~= "transfer" then
             local src = entry.source or "unknown"
             if not sourceTotals[src] then
                 sourceTotals[src] = { income = 0, expense = 0 }
@@ -574,9 +617,11 @@ function Data:GetExportCSV()
         local dateStr = date("%Y-%m-%d", entry.timestamp)
         local timeStr = date("%H:%M:%S", entry.timestamp)
         local goldAmount = entry.amount / 10000
+        -- Transfers export as "bank_deposit" / "bank_withdraw"
+        local typeStr = entry.type == "transfer" and ("bank_" .. (entry.direction or "deposit")) or entry.type
         table.insert(lines, ("%d,%s,%s,%s,%d,%.2f,%s"):format(
             entry.timestamp, dateStr, timeStr,
-            entry.type, entry.amount, goldAmount,
+            typeStr, entry.amount, goldAmount,
             entry.source or "unknown"
         ))
     end

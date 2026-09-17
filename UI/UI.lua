@@ -126,11 +126,17 @@ function GoldFormatter.Abbrev(copper)
     end
 end
 
-function GoldFormatter.Colored(copper, entryType)
+--- @param direction string|nil for entryType "transfer": "deposit"|"withdraw"
+function GoldFormatter.Colored(copper, entryType, direction)
     local text = GoldFormatter.Full(copper)
     local Themes = GoldLedger:GetModule("Themes")
     local c
-    if entryType == "income" then
+    if entryType == "transfer" then
+        -- Bank transfer: neutral colour, sign shows which way the gold moved
+        c = Themes:GetColor("TRANSFER")
+        local sign = direction == "withdraw" and "+" or "-"
+        return ("|cff%02x%02x%02x%s%s|r"):format(c[1]*255, c[2]*255, c[3]*255, sign, text)
+    elseif entryType == "income" then
         c = Themes:GetColor("INCOME")
         return ("|cff%02x%02x%02x+%s|r"):format(c[1]*255, c[2]*255, c[3]*255, text)
     else
@@ -993,6 +999,10 @@ function UI:OnEnable()
     local Tracker = GoldLedger:GetModule("Tracker")
     if Tracker then
         Tracker:OnGoldChanged(function()
+            local MF = ns.UI_MainFrame
+            if MF then MF.UpdateSummaries() end
+        end)
+        GoldLedger.Events:On("WARBAND_BANK_UPDATED", function()
             local MF = ns.UI_MainFrame
             if MF then MF.UpdateSummaries() end
         end)

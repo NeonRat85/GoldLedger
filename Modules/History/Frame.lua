@@ -57,7 +57,7 @@ local function CreateEntryRow(parent, index)
         self.dateText:SetText(date("%Y-%m-%d", entry.timestamp))
         self.timeText:SetText(date((coreL and coreL["TIME_FORMAT"]) or "%H:%M", entry.timestamp))
         if helpers and helpers.GoldFormatter then
-            self.amountText:SetText(helpers.GoldFormatter.Colored(entry.amount, entry.type))
+            self.amountText:SetText(helpers.GoldFormatter.Colored(entry.amount, entry.type, entry.direction))
         end
 
         local source = entry.source or "unknown"
@@ -102,6 +102,8 @@ function Frame:Create()
         { key = "quest",   localeKey = "SRC_QUEST" },
         { key = "loot",    localeKey = "SRC_LOOT" },
         { key = "trade",   localeKey = "SRC_TRADE" },
+        { key = "bank",    localeKey = "SRC_BANK" },
+        { key = "guildbank", localeKey = "SRC_GUILDBANK" },
         { key = "unknown", localeKey = "SRC_UNKNOWN" },
     }
 
@@ -147,6 +149,7 @@ function Frame:Create()
         { key = "all",     text = l["HISTORY_TYPE_ALL"] },
         { key = "income",  text = l["HISTORY_TYPE_INCOME"] },
         { key = "expense", text = l["HISTORY_TYPE_EXPENSE"] },
+        { key = "transfer", text = l["HISTORY_TYPE_TRANSFER"] },
     }
 
     f.typeButtons = {}
