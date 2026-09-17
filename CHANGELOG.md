@@ -5,6 +5,24 @@ All notable changes to this fork are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Minimap button tooltip and clicks not working reliably.** The button set its
+  strata and level without fixing them, so when the toplevel minimap cluster
+  re-layered its children the button could drop beneath the minimap, which then
+  took the mouse. Strata and level are now fixed, as LibDBIcon does. The border
+  was also drawn larger than, and offset from, the clickable area; the size and
+  layout now match LibDBIcon so the visible ring and the hit area line up.
+- Dragging used `UIParent`'s scale against `Minimap` coordinates, placing the
+  button wrongly when the minimap is resized in Edit Mode.
+
+### Changed
+
+- The minimap button highlights on hover, hides its tooltip while dragging, and
+  only runs an `OnUpdate` handler during a drag instead of every frame.
+
 ## [2.5.0]
 
 ### Fixed

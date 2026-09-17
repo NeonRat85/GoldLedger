@@ -28,19 +28,29 @@ local function CreateButton()
     local helpers = ns.UI_Helpers
     local GoldFormatter = helpers and helpers.GoldFormatter
 
+    -- Layout and layering follow LibDBIcon-1.0 (retail), which the minimap
+    -- buttons of most other addons use.
     local button = CreateFrame("Button", "GoldLedgerMinimapButton", Minimap)
-    button:SetSize(32, 32)
+    button:SetSize(31, 31)
+    -- Fixed strata/level: the button is parented to Minimap, whose cluster is
+    -- LOW strata and toplevel. Without these, a Raise() or strata change on an
+    -- ancestor re-layers the button under the minimap, which then takes the mouse.
     button:SetFrameStrata("MEDIUM")
+    button:SetFixedFrameStrata(true)
     button:SetFrameLevel(8)
+    button:SetFixedFrameLevel(true)
+    button:RegisterForClicks("AnyUp")
+    button:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
 
     local icon = button:CreateTexture(nil, "ARTWORK")
     icon:SetTexture("Interface\\Icons\\INV_Misc_Coin_01")
-    icon:SetSize(20, 20)
+    icon:SetSize(18, 18)
     icon:SetPoint("CENTER")
 
+    -- The ring sits in the top-left of this texture; 50px lines it up with the 31px hit area
     local border = button:CreateTexture(nil, "OVERLAY")
     border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
-    border:SetSize(56, 56)
+    border:SetSize(50, 50)
     border:SetPoint("TOPLEFT")
 
     local background = button:CreateTexture(nil, "BACKGROUND")
@@ -50,7 +60,7 @@ local function CreateButton()
 
     local function UpdatePosition(angle)
         local rad = math.rad(angle)
-        local radius = (Minimap:GetWidth() / 2) + 10
+        local radius = (Minimap:GetWidth() / 2) + 5
         button:ClearAllPoints()
         button:SetPoint("CENTER", Minimap, "CENTER",
             math.cos(rad) * radius,
@@ -58,30 +68,35 @@ local function CreateButton()
         )
     end
 
-    local isDragging = false
-    button:RegisterForDrag("LeftButton")
-
-    button:SetScript("OnDragStart", function() isDragging = true end)
-
-    button:SetScript("OnDragStop", function()
-        isDragging = false
+    -- Angle from the minimap centre to the cursor, in Minimap's own coordinate
+    -- space (the minimap can be scaled independently of UIParent in Edit Mode)
+    local function CursorAngle()
         local mx, my = Minimap:GetCenter()
         local cx, cy = GetCursorPosition()
-        local scale = UIParent:GetEffectiveScale()
-        local angle = math.deg(math.atan2(cy / scale - my, cx / scale - mx))
+        local scale = Minimap:GetEffectiveScale()
+        return math.deg(math.atan2(cy / scale - my, cx / scale - mx)) % 360
+    end
+
+    local function OnDragUpdate()
+        UpdatePosition(CursorAngle())
+    end
+
+    button:RegisterForDrag("LeftButton")
+
+    button:SetScript("OnDragStart", function(self)
+        self:LockHighlight()
+        if GameTooltip then GameTooltip:Hide() end
+        self:SetScript("OnUpdate", OnDragUpdate)
+    end)
+
+    button:SetScript("OnDragStop", function(self)
+        self:SetScript("OnUpdate", nil)
+        self:UnlockHighlight()
+        local angle = CursorAngle()
         if _G.GoldLedgerDB and _G.GoldLedgerDB.settings then
             _G.GoldLedgerDB.settings.minimapPos = angle
         end
         UpdatePosition(angle)
-    end)
-
-    button:SetScript("OnUpdate", function()
-        if isDragging then
-            local mx, my = Minimap:GetCenter()
-            local cx, cy = GetCursorPosition()
-            local scale = UIParent:GetEffectiveScale()
-            UpdatePosition(math.deg(math.atan2(cy / scale - my, cx / scale - mx)))
-        end
     end)
 
     button:SetScript("OnClick", function()
