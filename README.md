@@ -2,7 +2,7 @@
 
 A World of Warcraft addon that tracks every copper in and out: vendors, the Auction House, mail, loot, quests, repairs, trades and your warband bank. Daily and monthly summaries, a chart, a savings goal, and every character on your account.
 
-![Version](https://img.shields.io/badge/version-1.0.0-b87333)
+![Version](https://img.shields.io/badge/version-1.0.1-b87333)
 ![Interface](https://img.shields.io/badge/interface-120100-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 

@@ -2,7 +2,7 @@
 ## Title: Copperwise
 ## Notes: Tracks every copper in and out: vendors, Auction House, mail, loot, quests, repairs and warband bank transfers
 ## Author: NeonRat85
-## Version: 1.0.0
+## Version: 1.0.1
 ## SavedVariables: CopperwiseDB
 ## IconTexture: Interface\Icons\INV_Misc_Coin_05
 ## X-Website: https://github.com/NeonRat85/Copperwise
