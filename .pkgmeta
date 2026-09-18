@@ -3,6 +3,7 @@ package-as: Copperwise
 
 ignore:
   - tests
+  - docs
   - .github
   - .gitattributes
   - .gitignore

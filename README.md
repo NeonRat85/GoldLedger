@@ -20,6 +20,20 @@ A World of Warcraft addon that tracks every copper in and out: vendors, the Auct
 - **Minimap button** (LibDBIcon) with today's and this month's totals
 - **Modular**: delete any `Modules/<Name>/` folder to remove that feature
 
+## Copperwise Viewer
+
+**[neonrat85.github.io/Copperwise](https://neonrat85.github.io/Copperwise/)** shows your Copperwise history in a web browser, outside the game:
+
+- Income, expense and net for the last 7, 30 or 90 days or all time, per character or across your account
+- A daily income and expense chart
+- Totals by source (vendor, Auction House, loot, quests and so on), with bank transfers kept separate
+- Your best-selling Auction House items and the AH cut you've paid
+- Every transaction, with item names, searchable and filterable
+
+Open `WTF/Account/<account>/SavedVariables/Copperwise.lua` on the page, or drag the file onto it. The file is read in your browser and never uploaded. It also opens files saved by GoldLedger. WoW writes the file when you log out or `/reload`, so reopen it after playing to see new transactions.
+
+The page source is [`docs/index.html`](docs/index.html); it isn't part of the addon download.
+
 ## Installation
 
 Copy the `Copperwise` folder into your AddOns directory:
