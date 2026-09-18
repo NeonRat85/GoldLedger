@@ -55,5 +55,5 @@ jobs:
             else
               echo "ok: $file"
             fi
-          done < GoldLedger.toc
+          done < Copperwise.toc
           exit $status

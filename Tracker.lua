@@ -1,5 +1,5 @@
 --[[
-    GoldLedger: Tracker.lua
+    Copperwise: Tracker.lua
     Patterns: Observer, State
 
     Отслеживает изменения голды через WoW-ивенты:
@@ -10,11 +10,11 @@
 ]]
 
 local ADDON_NAME, ns = ...
-local GoldLedger = ns.GoldLedger
+local Copperwise = ns.Copperwise
 local L = ns.L
 
 local Tracker = {}
-GoldLedger:RegisterModule("Tracker", Tracker)
+Copperwise:RegisterModule("Tracker", Tracker)
 
 -------------------------------------------------------------------------------
 -- State
@@ -151,7 +151,7 @@ end
 local function QueueBankOp(bank, kind, amount)
     if type(amount) ~= "number" or amount <= 0 then return end
     table.insert(pendingBankOps, { bank = bank, kind = kind, amount = amount, time = GetTime() })
-    GoldLedger:Debug("Tracker", "Bank op captured:", bank, kind, amount)
+    Copperwise:Debug("Tracker", "Bank op captured:", bank, kind, amount)
 end
 
 --- Removes and returns the pending bank op matching this gold change, if any
@@ -286,11 +286,11 @@ local function ResolveVendorSales()
                 local more = #matched - 3
                 entry.itemName = table.concat(names, ", ") .. (more > 0 and (" +%d more"):format(more) or "")
             end
-            GoldLedger:Debug("Tracker", "Vendor sale matched:", entry.itemName, "| amount:", sale.amount)
+            Copperwise:Debug("Tracker", "Vendor sale matched:", entry.itemName, "| amount:", sale.amount)
             table.remove(pendingVendorSales, i)
             updated = true
         elseif now - sale.time > VENDOR_MATCH_TIMEOUT then
-            GoldLedger:Debug("Tracker", "Vendor sale unmatched, giving up | amount:", sale.amount)
+            Copperwise:Debug("Tracker", "Vendor sale unmatched, giving up | amount:", sale.amount)
             table.remove(pendingVendorSales, i)
         else
             i = i + 1
@@ -298,7 +298,7 @@ local function ResolveVendorSales()
     end
 
     if updated then
-        GoldLedger.Events:Emit("ENTRIES_UPDATED")
+        Copperwise.Events:Emit("ENTRIES_UPDATED")
     end
 end
 
@@ -323,8 +323,8 @@ local function ProcessGoldChange()
     -- stays income/expense but is labelled as guild bank.
     local bankOp = TakeMatchingBankOp(absAmount, entryType)
     if bankOp and bankOp.bank == "account" then
-        GoldLedger:Debug("Tracker", "transfer | warband bank", bankOp.kind, "| delta:", delta)
-        local Data = GoldLedger:GetModule("Data")
+        Copperwise:Debug("Tracker", "transfer | warband bank", bankOp.kind, "| delta:", delta)
+        local Data = Copperwise:GetModule("Data")
         if Data then
             Data:AddTransfer(delta, "bank")
         end
@@ -352,7 +352,7 @@ local function ProcessGoldChange()
             local senderEq = AUCTION_HOUSE_MAIL_SELLER and mail.sender == AUCTION_HOUSE_MAIL_SELLER
             if senderEq then
                 source = "ah"
-                GoldLedger:Debug("Tracker", "AH mail (exact sender):", mail.sender)
+                Copperwise:Debug("Tracker", "AH mail (exact sender):", mail.sender)
             end
         end
         -- Если очередь пуста (просроченный мейл вернул голд автоматически),
@@ -373,7 +373,7 @@ local function ProcessGoldChange()
     end
 
     -- Debug
-    GoldLedger:Debug("Tracker",
+    Copperwise:Debug("Tracker",
         entryType, "| source:", source,
         "| delta:", delta,
         "| before:", lastGold,
@@ -381,7 +381,7 @@ local function ProcessGoldChange()
     )
 
     -- Логируем через Data
-    local Data = GoldLedger:GetModule("Data")
+    local Data = Copperwise:GetModule("Data")
     local entry = Data and Data:AddEntry(delta, source)
 
     -- Уведомляем подписчиков
@@ -404,12 +404,12 @@ function Tracker:OnEnable()
     lastGold = GetMoney()
     isReady = true
 
-    GoldLedger:Debug("Tracker", "Ready | starting gold:", lastGold)
+    Copperwise:Debug("Tracker", "Ready | starting gold:", lastGold)
 
     -- Хук на RepairAllItems() для отделения ремонта от покупок у вендора
     hooksecurefunc("RepairAllItems", function()
         repairPending = true
-        GoldLedger:Debug("Tracker", "RepairAllItems() called — repair pending")
+        Copperwise:Debug("Tracker", "RepairAllItems() called — repair pending")
     end)
 
     -- Хук на TakeInboxMoney(index) — захватываем sender/subject/money мейла
@@ -423,7 +423,7 @@ function Tracker:OnEnable()
                 subject = subject,
                 money   = money,
             })
-            GoldLedger:Debug("Tracker", "TakeInboxMoney captured:", sender, "money:", money)
+            Copperwise:Debug("Tracker", "TakeInboxMoney captured:", sender, "money:", money)
         end
     end)
 
@@ -447,34 +447,34 @@ function Tracker:OnEnable()
 
     -- Warband bank balance: cache it and let the UI refresh
     local function RefreshWarbandBank()
-        local Data = GoldLedger:GetModule("Data")
+        local Data = Copperwise:GetModule("Data")
         if Data then
             Data:RefreshWarbandBankMoney()
         end
-        GoldLedger.Events:Emit("WARBAND_BANK_UPDATED")
+        Copperwise.Events:Emit("WARBAND_BANK_UPDATED")
     end
-    GoldLedger:RegisterEvent("ACCOUNT_MONEY", RefreshWarbandBank)
-    GoldLedger:RegisterEvent("BANKFRAME_OPENED", RefreshWarbandBank)
+    Copperwise:RegisterEvent("ACCOUNT_MONEY", RefreshWarbandBank)
+    Copperwise:RegisterEvent("BANKFRAME_OPENED", RefreshWarbandBank)
 
     -- Vendor sale item names (buyback list)
-    GoldLedger:RegisterEvent("MERCHANT_SHOW", ResetBuybackBaseline)
-    GoldLedger:RegisterEvent("MERCHANT_UPDATE", ResolveVendorSales)
-    GoldLedger:RegisterEvent("MERCHANT_CLOSED", function() wipe(pendingVendorSales) end)
+    Copperwise:RegisterEvent("MERCHANT_SHOW", ResetBuybackBaseline)
+    Copperwise:RegisterEvent("MERCHANT_UPDATE", ResolveVendorSales)
+    Copperwise:RegisterEvent("MERCHANT_CLOSED", function() wipe(pendingVendorSales) end)
 
     -- Подписка на изменение голды
-    GoldLedger:RegisterEvent("PLAYER_MONEY", function()
+    Copperwise:RegisterEvent("PLAYER_MONEY", function()
         ProcessGoldChange()
     end)
 
     -- Подписка на контекстные ивенты для определения источника
     for event, sourceKey in pairs(SOURCE_EVENTS) do
-        GoldLedger:RegisterEvent(event, function()
+        Copperwise:RegisterEvent(event, function()
             if sourceKey == "clear" then
                 currentSource = "unknown"
             else
                 currentSource = sourceKey
             end
-            GoldLedger:Debug("Tracker", "Context →", currentSource, "(from " .. event .. ")")
+            Copperwise:Debug("Tracker", "Context →", currentSource, "(from " .. event .. ")")
         end)
     end
 end

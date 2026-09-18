@@ -1,8 +1,8 @@
 --[[
-    GoldLedger / AuctionTracker: Query.lua
+    Copperwise / AuctionTracker: Query.lua
 
     Read-only query layer over core Data. NO own SavedVariables.
-    - Pulls entries from GoldLedgerDB via Data:GetRecentEntries()
+    - Pulls entries from CopperwiseDB via Data:GetRecentEntries()
     - Filters: source=="ah", ahType set, period, ahType filter, search
     - Synthesizes virtual "cut" entries from sales with cutAmount > 0
     - Returns paginated result + totals (Income / Expense / Net)
@@ -68,7 +68,7 @@ function Query:Run(options)
         totalIncome = 0, totalExpense = 0, net = 0, recordCount = 0,
     }
 
-    local GL = ns.GoldLedger
+    local GL = ns.Copperwise
     local Data = GL and GL:GetModule("Data")
     if not Data or not Data.GetRecentEntries then return empty end
 

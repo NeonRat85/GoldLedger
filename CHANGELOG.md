@@ -1,11 +1,31 @@
 # Changelog
 
-All notable changes to this fork are documented here.
+All notable changes to Copperwise are documented here. Versions before 1.0.0
+were released as GoldLedger (by tum24, then this fork) and are kept for history.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0]
+
+First release as **Copperwise**, based on GoldLedger 2.4.4 by tum24 (MIT).
+
+### Changed
+
+- **Renamed to Copperwise.** Folder, `.toc`, SavedVariables (`CopperwiseDB`),
+  global and frame names, chat messages and the minimap button all use the new
+  name, so Copperwise can be installed alongside the original GoldLedger.
+- Slash commands are now `/cw` and `/copperwise` (was `/gl`, `/goldledger`),
+  and `/cwa` for Auction history (was `/gla`).
+- Copper coin icon (`INV_Misc_Coin_05`) and copper-coloured name in chat and
+  the minimap tooltip.
+
+### Added
+
+- **One-time import from GoldLedger.** If GoldLedger is still enabled the first
+  time Copperwise loads, its characters, transactions, warband bank balance and
+  goal are copied into Copperwise. After that GoldLedger can be disabled.
+
 
 ### Fixed
 
@@ -58,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The minimap setting could disagree with what was shown after a reload, because
   the Settings checkbox and the button saved visibility under different keys.
 
-## [2.5.0]
+## [GoldLedger fork 2.5.0]
 
 ### Fixed
 
@@ -90,7 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `X-Curse-Project-ID` from the `.toc`, since this fork is not the
   CurseForge project.
 
-## [2.4.4]
+## [GoldLedger 2.4.4]
 
 Original release by tum24, imported unmodified from
 [CurseForge](https://www.curseforge.com/wow/addons/goldledger).

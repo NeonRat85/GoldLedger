@@ -1,5 +1,5 @@
 --[[
-    GoldLedger / Goal: Frame.lua
+    Copperwise / Goal: Frame.lua
     Goal amount dialog. Triggered by clicking the Goal card in MainFrame.
 ]]
 
@@ -9,7 +9,7 @@ ns.Goal = ns.Goal or {}
 local Frame = {}
 ns.Goal.Frame = Frame
 
-local function UI() return ns.GoldLedger and ns.GoldLedger:GetModule("UI") end
+local function UI() return ns.Copperwise and ns.Copperwise:GetModule("UI") end
 local function L()  return ns.Goal.L end
 local function H()  return ns.UI_Helpers end
 
@@ -22,7 +22,7 @@ function Frame:Create()
     if not ui then return end
 
     local f = ui:CreatePopup({
-        name  = "GoldLedgerGoalDialog",
+        name  = "CopperwiseGoalDialog",
         title = "",                  -- dialog uses a centered title label instead of title bar text
         width = 280, height = 130,
         movable = true,
@@ -51,7 +51,7 @@ function Frame:Create()
         local text = editBox:GetText() or ""
         local amount = tonumber(text)
         if amount and amount > 0 then
-            local Data = ns.GoldLedger and ns.GoldLedger:GetModule("Data")
+            local Data = ns.Copperwise and ns.Copperwise:GetModule("Data")
             if Data then Data:SetGoal(amount * 10000) end
         end
         f:Hide()
@@ -60,7 +60,7 @@ function Frame:Create()
     local function CancelGoal() f:Hide() end
 
     local function ClearGoal()
-        local Data = ns.GoldLedger and ns.GoldLedger:GetModule("Data")
+        local Data = ns.Copperwise and ns.Copperwise:GetModule("Data")
         if Data then Data:ClearGoal() end
         f:Hide()
     end
@@ -82,7 +82,7 @@ function Frame:Create()
 
     -- Refresh MainFrame goal display when dialog closes
     f:SetScript("OnHide", function()
-        local coreUI = ns.GoldLedger and ns.GoldLedger:GetModule("UI")
+        local coreUI = ns.Copperwise and ns.Copperwise:GetModule("UI")
         if coreUI and coreUI.RefreshGoal then coreUI:RefreshGoal() end
     end)
 
@@ -92,7 +92,7 @@ end
 
 function Frame:Show()
     if not goalDialog then self:Create() end
-    local Data = ns.GoldLedger and ns.GoldLedger:GetModule("Data")
+    local Data = ns.Copperwise and ns.Copperwise:GetModule("Data")
     if Data then
         local current = Data:GetGoal() or 0
         if current > 0 then

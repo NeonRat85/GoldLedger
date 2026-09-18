@@ -1,5 +1,5 @@
 --[[
-    GoldLedger / Breakdown: Frame.lua
+    Copperwise / Breakdown: Frame.lua
     Source breakdown popup: income/expense by source with period filter.
 ]]
 
@@ -9,7 +9,7 @@ ns.Breakdown = ns.Breakdown or {}
 local Frame = {}
 ns.Breakdown.Frame = Frame
 
-local function UI() return ns.GoldLedger and ns.GoldLedger:GetModule("UI") end
+local function UI() return ns.Copperwise and ns.Copperwise:GetModule("UI") end
 local function L()  return ns.Breakdown.L end
 local function H()  return ns.UI_Helpers end
 
@@ -27,7 +27,7 @@ local function UpdateData()
     local helpers = H()
     if not helpers then return end
 
-    local Data = ns.GoldLedger and ns.GoldLedger:GetModule("Data")
+    local Data = ns.Copperwise and ns.Copperwise:GetModule("Data")
     if not Data then return end
     local sourceTotals, grandTotals = Data:GetSourceBreakdown(activePeriod)
 
@@ -78,13 +78,13 @@ function Frame:Create()
     local l = L()
     if not ui then return end
 
-    local GL = ns.GoldLedger
+    local GL = ns.Copperwise
     local Data = GL:GetModule("Data")
     local Tracker = GL:GetModule("Tracker")
     local coreL = ns.L
 
     local f = ui:CreatePopup({
-        name  = "GoldLedgerBreakdownFrame",
+        name  = "CopperwiseBreakdownFrame",
         title = l["BREAKDOWN_TITLE"],
         width = 380, height = 432,  -- +2 source rows (bank, guild bank)
     })

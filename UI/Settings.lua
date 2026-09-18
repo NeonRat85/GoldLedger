@@ -1,14 +1,14 @@
 --[[
-    GoldLedger: UI/Settings.lua
+    Copperwise: UI/Settings.lua
     Settings popup: theme, language, minimap toggle, reset session.
     Uses ONLY UI public API — no direct WoW frame creation.
 ]]
 
 local ADDON_NAME, ns = ...
-local GoldLedger = ns.GoldLedger
+local Copperwise = ns.Copperwise
 local L = ns.L
 
-local function UI()      return GoldLedger and GoldLedger:GetModule("UI") end
+local function UI()      return Copperwise and Copperwise:GetModule("UI") end
 local function Helpers() return ns.UI_Helpers end
 local function TC(key)
     local h = Helpers()
@@ -26,7 +26,7 @@ local function CreateSettingsFrame()
     if not ui then return end
 
     local f = ui:CreatePopup({
-        name  = "GoldLedgerSettingsFrame",
+        name  = "CopperwiseSettingsFrame",
         title = L and L["HEADER_SETTINGS"] or "Settings",
         width = 320, height = 300,
     })
@@ -41,8 +41,8 @@ local function CreateSettingsFrame()
 
     local minimapCheck = ui:CreateCheckbox(f, {
         onChange = function(checked)
-            if _G.GoldLedgerDB and _G.GoldLedgerDB.settings then
-                _G.GoldLedgerDB.settings.showMinimap = checked
+            if _G.CopperwiseDB and _G.CopperwiseDB.settings then
+                _G.CopperwiseDB.settings.showMinimap = checked
             end
             if ns.Minimap and ns.Minimap.SetVisible then
                 ns.Minimap.SetVisible(checked)
@@ -67,8 +67,8 @@ local function CreateSettingsFrame()
         local btn = ui:CreateButton(f, {
             width = 90, height = 22,
             onClick = function()
-                if _G.GoldLedgerDB and _G.GoldLedgerDB.settings then
-                    _G.GoldLedgerDB.settings.language = langIds[i]
+                if _G.CopperwiseDB and _G.CopperwiseDB.settings then
+                    _G.CopperwiseDB.settings.language = langIds[i]
                 end
                 local localeArg = langIds[i] == "auto" and nil or langIds[i]
                 if L and L.SetLocale then L:SetLocale(localeArg) end
@@ -76,8 +76,8 @@ local function CreateSettingsFrame()
                     -- Notify all listeners (MainFrame + each feature) that the
                     -- locale changed; they tear themselves down so the next
                     -- Toggle re-creates with fresh strings.
-                    if GoldLedger and GoldLedger.Events then
-                        GoldLedger.Events:Emit("LANGUAGE_CHANGED", langIds[i])
+                    if Copperwise and Copperwise.Events then
+                        Copperwise.Events:Emit("LANGUAGE_CHANGED", langIds[i])
                     end
                     RefreshSettings()
                     local h = Helpers()
@@ -97,11 +97,11 @@ local function CreateSettingsFrame()
     local resetBtn = ui:CreateButton(f, {
         width = 140, height = 24,
         onClick = function()
-            local Tracker = GoldLedger:GetModule("Tracker")
+            local Tracker = Copperwise:GetModule("Tracker")
             if Tracker and Tracker.ResetSession then Tracker:ResetSession() end
             -- Refresh visible totals (MainFrame listens internally)
-            if GoldLedger and GoldLedger.Events then
-                GoldLedger.Events:Emit("SESSION_RESET")
+            if Copperwise and Copperwise.Events then
+                Copperwise.Events:Emit("SESSION_RESET")
             end
             settingsFrame:Hide()
         end,
@@ -115,7 +115,7 @@ end
 RefreshSettings = function()
     if not settingsFrame then CreateSettingsFrame() end
     local f = settingsFrame
-    local Themes = GoldLedger:GetModule("Themes")
+    local Themes = Copperwise:GetModule("Themes")
 
     if f.SetBackdropColor and f.GetBackdrop and f:GetBackdrop() then
         f:SetBackdropColor(TC("FRAME_BG"))
@@ -126,13 +126,13 @@ RefreshSettings = function()
 
     settingsElements.minimapLabel:SetText(L["SETTINGS_MINIMAP"])
     settingsElements.minimapCheck:SetChecked(
-        _G.GoldLedgerDB and _G.GoldLedgerDB.settings
-            and _G.GoldLedgerDB.settings.showMinimap ~= false
+        _G.CopperwiseDB and _G.CopperwiseDB.settings
+            and _G.CopperwiseDB.settings.showMinimap ~= false
     )
 
     settingsElements.langLabel:SetText(L["SETTINGS_LANGUAGE"])
 
-    local currentLang = (_G.GoldLedgerDB and _G.GoldLedgerDB.settings and _G.GoldLedgerDB.settings.language) or "auto"
+    local currentLang = (_G.CopperwiseDB and _G.CopperwiseDB.settings and _G.CopperwiseDB.settings.language) or "auto"
     local langLabels = { L["SETTINGS_LANG_AUTO"], "English", "Русский" }
     for i, btn in ipairs(settingsElements.langBtns) do
         btn.text:SetText(langLabels[i])

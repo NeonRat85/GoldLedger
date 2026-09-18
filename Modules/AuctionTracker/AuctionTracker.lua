@@ -1,11 +1,11 @@
 --[[
-    GoldLedger / AuctionTracker: AuctionTracker.lua
+    Copperwise / AuctionTracker: AuctionTracker.lua
     Feature module entry point.
 
     Uses core's modular API:
-      - GoldLedger:RegisterFeature("auction", module)     — lifecycle
-      - GoldLedger:RegisterHeaderButton(name, label, fn)  — button in main frame
-      - GoldLedger:RegisterSlashCommand("auction", fn)    — /gl auction
+      - Copperwise:RegisterFeature("auction", module)     — lifecycle
+      - Copperwise:RegisterHeaderButton(name, label, fn)  — button in main frame
+      - Copperwise:RegisterSlashCommand("auction", fn)    — /cw auction
       - Data:RegisterNamespace("auction", defaults)        — namespaced data in shared DB
       - UI:CreateDropdown / CreatePaginationBar / etc.     — shared UI components
       - Tracker:OnGoldChanged(callback)                    — amend entries
@@ -17,15 +17,15 @@
 local ADDON_NAME, ns = ...
 ns.AuctionTracker = ns.AuctionTracker or {}
 
-local GoldLedger = ns.GoldLedger
+local Copperwise = ns.Copperwise
 local Module = {}
 ns.AuctionTracker.Module = Module
 
 -------------------------------------------------------------------------------
 -- Feature registration (uses new Core API)
 -------------------------------------------------------------------------------
-if GoldLedger and GoldLedger.RegisterFeature then
-    GoldLedger:RegisterFeature("auction", Module)
+if Copperwise and Copperwise.RegisterFeature then
+    Copperwise:RegisterFeature("auction", Module)
 end
 
 -------------------------------------------------------------------------------
@@ -33,7 +33,7 @@ end
 -------------------------------------------------------------------------------
 function Module:OnInitialize()
     -- Register namespaced data in shared DB
-    local Data = GoldLedger:GetModule("Data")
+    local Data = Copperwise:GetModule("Data")
     if Data and Data.RegisterNamespace then
         Data:RegisterNamespace("auction", {
             settings = {},  -- module-specific settings (future use)
@@ -47,8 +47,8 @@ end
 
 function Module:OnEnable()
     -- Register header button (dynamic, core creates it in MainFrame)
-    if GoldLedger.RegisterHeaderButton then
-        GoldLedger:RegisterHeaderButton("auction", function()
+    if Copperwise.RegisterHeaderButton then
+        Copperwise:RegisterHeaderButton("auction", function()
             local L = ns.AuctionTracker.L
             return L and L["AUCTION_BUTTON"] or "Auction"
         end, function()
@@ -57,9 +57,9 @@ function Module:OnEnable()
         end)
     end
 
-    -- Register slash subcommand: /gl auction
-    if GoldLedger.RegisterSlashCommand then
-        GoldLedger:RegisterSlashCommand("auction", function()
+    -- Register slash subcommand: /cw auction
+    if Copperwise.RegisterSlashCommand then
+        Copperwise:RegisterSlashCommand("auction", function()
             local Frame = ns.AuctionTracker.Frame
             if Frame and Frame.Toggle then Frame:Toggle() end
         end)
@@ -69,18 +69,18 @@ end
 -------------------------------------------------------------------------------
 -- Standalone slash commands (backup, zero coupling)
 -------------------------------------------------------------------------------
-_G.SLASH_GOLDLEDGERAUCTION1 = "/gla"
+_G.SLASH_COPPERWISEAUCTION1 = "/cwa"
 
 -- Only add a key: never assign the SlashCmdList global itself (even to itself).
 -- That taints the variable, and every slash command then runs tainted, so
--- protected ones like /pvp fail with ADDON_ACTION_FORBIDDEN blamed on GoldLedger.
-SlashCmdList["GOLDLEDGERAUCTION"] = function(msg)
+-- protected ones like /pvp fail with ADDON_ACTION_FORBIDDEN blamed on Copperwise.
+SlashCmdList["COPPERWISEAUCTION"] = function(msg)
     local cmd = strtrim(msg or ""):lower()
 
     if cmd == "seed" then
         -- Debug: inject fake AH entries into core Data
-        local Data = GoldLedger and GoldLedger:GetModule("Data")
-        if not Data then print("|cffff4444GoldLedger Data not loaded|r") return end
+        local Data = Copperwise and Copperwise:GetModule("Data")
+        if not Data then print("|cffff4444Copperwise Data not loaded|r") return end
 
         local now = time()
         local DAY = 86400
@@ -103,13 +103,13 @@ SlashCmdList["GOLDLEDGERAUCTION"] = function(msg)
         Data:AddEntry(30000, "ah")
         Data:AddEntry(-8000, "ah")
 
-        print("|cff00ff00GoldLedger:|r Seeded 10 fake AH entries. Open /gla to see them.")
+        print("|cffb87333Copperwise:|r Seeded 10 fake AH entries. Open /cwa to see them.")
         return
     end
 
     if cmd == "clear" then
         -- Debug: remove all AH entries
-        local Data = GoldLedger and GoldLedger:GetModule("Data")
+        local Data = Copperwise and Copperwise:GetModule("Data")
         if Data then
             local charData = Data:EnsureCharacterData()
             local cleaned = {}
@@ -119,7 +119,7 @@ SlashCmdList["GOLDLEDGERAUCTION"] = function(msg)
                 end
             end
             charData.entries = cleaned
-            print("|cff00ff00GoldLedger:|r Cleared all AH entries.")
+            print("|cffb87333Copperwise:|r Cleared all AH entries.")
         end
         return
     end

@@ -1,5 +1,5 @@
 --[[
-    GoldLedger / Export: Frame.lua
+    Copperwise / Export: Frame.lua
     Multi-line CSV export popup.
 ]]
 
@@ -9,7 +9,7 @@ ns.Export = ns.Export or {}
 local Frame = {}
 ns.Export.Frame = Frame
 
-local function UI() return ns.GoldLedger and ns.GoldLedger:GetModule("UI") end
+local function UI() return ns.Copperwise and ns.Copperwise:GetModule("UI") end
 local function L()  return ns.Export.L end
 local function H()  return ns.UI_Helpers end
 
@@ -22,7 +22,7 @@ function Frame:Create()
     if not ui then return end
 
     local f = ui:CreatePopup({
-        name  = "GoldLedgerExportFrame",
+        name  = "CopperwiseExportFrame",
         title = l["EXPORT_TITLE"],
         width = 500, height = 350,
     })
@@ -36,7 +36,7 @@ function Frame:Create()
     scrollFrame:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -28, 8)
 
     -- Replace scrollFrame.child with our multiline EditBox
-    local editBox = CreateFrame("EditBox", "GoldLedgerExportEditBox", scrollFrame)
+    local editBox = CreateFrame("EditBox", "CopperwiseExportEditBox", scrollFrame)
     editBox:SetMultiLine(true)
     editBox:SetAutoFocus(false)
     editBox:SetFontObject(ChatFontNormal)
@@ -59,7 +59,7 @@ function Frame:Show()
         return
     end
 
-    local Data = ns.GoldLedger and ns.GoldLedger:GetModule("Data")
+    local Data = ns.Copperwise and ns.Copperwise:GetModule("Data")
     if Data and Data.GetExportCSV then
         exportFrame.editBox:SetText(Data:GetExportCSV())
     end

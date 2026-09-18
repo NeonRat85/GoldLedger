@@ -1,5 +1,5 @@
 --[[
-    GoldLedger / Characters: Frame.lua
+    Copperwise / Characters: Frame.lua
     Multi-character summary popup with period tabs (day/week/month).
 ]]
 
@@ -9,7 +9,7 @@ ns.Characters = ns.Characters or {}
 local Frame = {}
 ns.Characters.Frame = Frame
 
-local function UI() return ns.GoldLedger and ns.GoldLedger:GetModule("UI") end
+local function UI() return ns.Copperwise and ns.Copperwise:GetModule("UI") end
 local function L()  return ns.Characters.L end
 local function H()  return ns.UI_Helpers end
 
@@ -26,7 +26,7 @@ local function UpdateList()
     if not helpers then return end
 
     local coreL = ns.L
-    local Data = ns.GoldLedger and ns.GoldLedger:GetModule("Data")
+    local Data = ns.Copperwise and ns.Copperwise:GetModule("Data")
     if not Data or not Data.GetAllCharactersSummary then return end
 
     local TC = helpers.TC or function() return 1,1,1,1 end
@@ -92,7 +92,7 @@ function Frame:Create()
     if not ui then return end
 
     local f = ui:CreatePopup({
-        name  = "GoldLedgerCharsFrame",
+        name  = "CopperwiseCharsFrame",
         title = l["CHARS_TITLE"],
         width = 340, height = 380,
     })

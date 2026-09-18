@@ -1,11 +1,11 @@
 --[[
-    GoldLedger: Core.lua
+    Copperwise: Core.lua
     Patterns: Module, Observer (Event Bus), Singleton
 
     Ядро аддона:
     - Module system для регистрации и доступа к модулям
     - Event bus с dispatch-таблицей (Observer pattern)
-    - Slash-команды /gl и /goldledger
+    - Slash-команды /cw и /copperwise
     - Инициализация при ADDON_LOADED
 ]]
 
@@ -15,13 +15,13 @@ local L = ns.L
 -------------------------------------------------------------------------------
 -- Singleton: глобальный namespace аддона
 -------------------------------------------------------------------------------
-local GoldLedger = {}
-GoldLedger.name = ADDON_NAME
-GoldLedger.version = C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version") or "1.0.0"
+local Copperwise = {}
+Copperwise.name = ADDON_NAME
+Copperwise.version = C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version") or "1.0.0"
 
 -- Export to global and namespace
-_G.GoldLedger = GoldLedger
-ns.GoldLedger = GoldLedger
+_G.Copperwise = Copperwise
+ns.Copperwise = Copperwise
 
 -------------------------------------------------------------------------------
 -- Module Pattern: регистрация и доступ к модулям
@@ -31,9 +31,9 @@ local modules = {}
 --- Регистрирует модуль в системе
 --- @param name string Имя модуля
 --- @param module table Таблица модуля
-function GoldLedger:RegisterModule(name, module)
+function Copperwise:RegisterModule(name, module)
     if modules[name] then
-        error(("GoldLedger: Module '%s' already registered"):format(name))
+        error(("Copperwise: Module '%s' already registered"):format(name))
     end
     modules[name] = module
     module.name = name
@@ -43,14 +43,14 @@ end
 --- Возвращает зарегистрированный модуль
 --- @param name string Имя модуля
 --- @return table|nil
-function GoldLedger:GetModule(name)
+function Copperwise:GetModule(name)
     return modules[name]
 end
 
 --- Вызывает метод на всех модулях (если метод существует)
 --- @param method string Имя метода
 --- @param ... any Аргументы
-function GoldLedger:CallModules(method, ...)
+function Copperwise:CallModules(method, ...)
     for _, mod in pairs(modules) do
         if type(mod[method]) == "function" then
             mod[method](mod, ...)
@@ -67,7 +67,7 @@ local eventHandlers = {} -- { [event] = { callback1, callback2, ... } }
 --- Регистрирует обработчик WoW-ивента
 --- @param event string WoW event name
 --- @param callback function Обработчик
-function GoldLedger:RegisterEvent(event, callback)
+function Copperwise:RegisterEvent(event, callback)
     if not eventHandlers[event] then
         eventHandlers[event] = {}
         eventFrame:RegisterEvent(event)
@@ -77,7 +77,7 @@ end
 
 --- Снимает все обработчики ивента
 --- @param event string WoW event name
-function GoldLedger:UnregisterEvent(event)
+function Copperwise:UnregisterEvent(event)
     eventHandlers[event] = nil
     eventFrame:UnregisterEvent(event)
 end
@@ -93,19 +93,19 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
 end)
 
 -------------------------------------------------------------------------------
--- Internal Event Bus: GoldLedger.Events:On/Off/Emit for cross-module messages
+-- Internal Event Bus: Copperwise.Events:On/Off/Emit for cross-module messages
 -------------------------------------------------------------------------------
 local busSubscribers = {}  -- { [event_name] = { fn1, fn2, ... } }
 
-GoldLedger.Events = {}
+Copperwise.Events = {}
 
-function GoldLedger.Events:On(name, handler)
+function Copperwise.Events:On(name, handler)
     busSubscribers[name] = busSubscribers[name] or {}
     table.insert(busSubscribers[name], handler)
     return handler
 end
 
-function GoldLedger.Events:Off(name, handler)
+function Copperwise.Events:Off(name, handler)
     local list = busSubscribers[name]
     if not list then return end
     for i, fn in ipairs(list) do
@@ -114,28 +114,28 @@ function GoldLedger.Events:Off(name, handler)
 end
 
 --- Public wrapper: register a handler for a WoW-native event (PLAYER_MONEY etc.)
---- Equivalent to GoldLedger:RegisterEvent but on the Events namespace for discoverability.
-function GoldLedger.Events:RegisterWoWEvent(event, handler)
-    return GoldLedger:RegisterEvent(event, handler)
+--- Equivalent to Copperwise:RegisterEvent but on the Events namespace for discoverability.
+function Copperwise.Events:RegisterWoWEvent(event, handler)
+    return Copperwise:RegisterEvent(event, handler)
 end
 
-function GoldLedger.Events:Emit(name, data)
+function Copperwise.Events:Emit(name, data)
     local list = busSubscribers[name]
     if not list then return end
     for _, fn in ipairs(list) do
         local ok, err = pcall(fn, data)
         if not ok then
-            GoldLedger:Debug("Events", "subscriber error on", name, "→", tostring(err))
+            Copperwise:Debug("Events", "subscriber error on", name, "→", tostring(err))
         end
     end
 end
 
 -------------------------------------------------------------------------------
 -- CreateLocale: helper to build a localized table for feature modules
--- Usage: local L = GoldLedger:CreateLocale({ enUS = {...}, ruRU = {...} })
+-- Usage: local L = Copperwise:CreateLocale({ enUS = {...}, ruRU = {...} })
 -- Reads current language from core Locale module (ns.L:GetLocale()).
 -------------------------------------------------------------------------------
-function GoldLedger:CreateLocale(tables)
+function Copperwise:CreateLocale(tables)
     local L = {}
     local enUS = tables.enUS or {}
     local ruRU = tables.ruRU or enUS
@@ -156,13 +156,13 @@ end
 -------------------------------------------------------------------------------
 -- Initialization: ADDON_LOADED
 -------------------------------------------------------------------------------
-GoldLedger:RegisterEvent("ADDON_LOADED", function(event, loadedAddon)
+Copperwise:RegisterEvent("ADDON_LOADED", function(event, loadedAddon)
     if loadedAddon ~= ADDON_NAME then return end
 
     -- Инициализация SavedVariables с defaults
-    GoldLedger:CallModules("OnInitialize")
+    Copperwise:CallModules("OnInitialize")
     -- Feature modules init (loaded after core via .toc order)
-    GoldLedger:CallFeatures("OnInitialize")
+    Copperwise:CallFeatures("OnInitialize")
 
     -- Приветственное сообщение (отложено чтобы избежать taint)
     C_Timer.After(0, function()
@@ -170,14 +170,14 @@ GoldLedger:RegisterEvent("ADDON_LOADED", function(event, loadedAddon)
     end)
 
     -- Больше не нужен этот ивент
-    GoldLedger:UnregisterEvent("ADDON_LOADED")
+    Copperwise:UnregisterEvent("ADDON_LOADED")
 end)
 
 -- PLAYER_LOGIN: модули могут подключиться к игровым данным
-GoldLedger:RegisterEvent("PLAYER_LOGIN", function()
-    GoldLedger:CallModules("OnEnable")
-    GoldLedger:CallFeatures("OnEnable")
-    GoldLedger:UnregisterEvent("PLAYER_LOGIN")
+Copperwise:RegisterEvent("PLAYER_LOGIN", function()
+    Copperwise:CallModules("OnEnable")
+    Copperwise:CallFeatures("OnEnable")
+    Copperwise:UnregisterEvent("PLAYER_LOGIN")
 end)
 
 -------------------------------------------------------------------------------
@@ -190,19 +190,19 @@ local headerButtons = {}
 --- Регистрирует feature-модуль (для фич, не инфраструктуры)
 --- @param name string Уникальное имя фичи (e.g. "auction")
 --- @param module table Таблица модуля с OnInitialize/OnEnable callbacks
-function GoldLedger:RegisterFeature(name, module)
+function Copperwise:RegisterFeature(name, module)
     features[name] = module
     module.name = name
     return module
 end
 
 --- Возвращает feature-модуль по имени
-function GoldLedger:GetFeature(name)
+function Copperwise:GetFeature(name)
     return features[name]
 end
 
 --- Вызывает метод на всех feature-модулях
-function GoldLedger:CallFeatures(method, ...)
+function Copperwise:CallFeatures(method, ...)
     for _, mod in pairs(features) do
         if type(mod[method]) == "function" then
             mod[method](mod, ...)
@@ -210,8 +210,8 @@ function GoldLedger:CallFeatures(method, ...)
     end
 end
 
---- Регистрирует slash-подкоманду /gl <subcommand> для feature-модуля
-function GoldLedger:RegisterSlashCommand(subcommand, callback)
+--- Регистрирует slash-подкоманду /cw <subcommand> для feature-модуля
+function Copperwise:RegisterSlashCommand(subcommand, callback)
     featureSlashCommands[subcommand:lower()] = callback
 end
 
@@ -219,13 +219,13 @@ end
 --- @param name string ID кнопки
 --- @param label string|function Текст кнопки или функция возвращающая текст (для динамической локализации)
 --- @param callback function OnClick handler
-function GoldLedger:RegisterHeaderButton(name, label, callback)
+function Copperwise:RegisterHeaderButton(name, label, callback)
     headerButtons[#headerButtons + 1] = { name = name, label = label, callback = callback }
 end
 
 --- Снимает регистрацию header-кнопки по имени.
 --- @return boolean true если кнопка найдена и удалена
-function GoldLedger:UnregisterHeaderButton(name)
+function Copperwise:UnregisterHeaderButton(name)
     for i, btn in ipairs(headerButtons) do
         if btn.name == name then
             table.remove(headerButtons, i)
@@ -236,7 +236,7 @@ function GoldLedger:UnregisterHeaderButton(name)
 end
 
 --- Снимает регистрацию slash-подкоманды.
-function GoldLedger:UnregisterSlashCommand(subcommand)
+function Copperwise:UnregisterSlashCommand(subcommand)
     if subcommand then
         featureSlashCommands[subcommand:lower()] = nil
     end
@@ -244,7 +244,7 @@ end
 
 --- Снимает регистрацию feature-модуля + чистит его header buttons и slash commands.
 --- Используется при runtime-выключении фичи (без перезагрузки UI).
-function GoldLedger:UnregisterFeature(name)
+function Copperwise:UnregisterFeature(name)
     if not features[name] then return false end
     features[name] = nil
     -- Header buttons часто регистрируются с тем же ключом что и feature
@@ -253,7 +253,7 @@ function GoldLedger:UnregisterFeature(name)
 end
 
 --- Возвращает зарегистрированные header buttons (для UI/MainFrame)
-function GoldLedger:GetHeaderButtons()
+function Copperwise:GetHeaderButtons()
     return headerButtons
 end
 
@@ -266,8 +266,8 @@ local debugMode = false
 -------------------------------------------------------------------------------
 -- Slash Commands
 -------------------------------------------------------------------------------
-SLASH_GOLDLEDGER1 = "/gl"
-SLASH_GOLDLEDGER2 = "/goldledger"
+SLASH_COPPERWISE1 = "/cw"
+SLASH_COPPERWISE2 = "/copperwise"
 
 --- Ищет feature slash callback по cmd. Поддерживает два варианта:
 ---   1. Точное совпадение  ("calc" → featureSlashCommands["calc"])
@@ -292,30 +292,30 @@ local function findFeatureSlash(cmd)
     return nil, nil
 end
 
-SlashCmdList["GOLDLEDGER"] = function(msg)
+SlashCmdList["COPPERWISE"] = function(msg)
     local cmd = strtrim(msg):lower()
 
     if cmd == "reset" then
-        local Data = GoldLedger:GetModule("Data")
+        local Data = Copperwise:GetModule("Data")
         if Data then
             Data:ResetCharacterData()
-            print("|cff00ff00GoldLedger:|r " .. L["RESET_CONFIRM"])
+            print("|cffb87333Copperwise:|r " .. L["RESET_CONFIRM"])
         end
     elseif cmd == "debug" then
-        GoldLedger:SetDebug(not debugMode)
+        Copperwise:SetDebug(not debugMode)
     elseif cmd == "dump" then
-        local Data = GoldLedger:GetModule("Data")
+        local Data = Copperwise:GetModule("Data")
         if Data then
-            GoldLedger:DumpTable("Daily", Data:GetDailySummary())
-            GoldLedger:DumpTable("Monthly", Data:GetMonthlySummary())
-            GoldLedger:DumpTable("Settings", Data:GetSettings())
+            Copperwise:DumpTable("Daily", Data:GetDailySummary())
+            Copperwise:DumpTable("Monthly", Data:GetMonthlySummary())
+            Copperwise:DumpTable("Settings", Data:GetSettings())
             print("|cff888888[GL:Dump]|r Entries: " .. #Data:GetRecentEntries(999))
         end
     elseif cmd == "settings" or cmd == "config" then
-        local UI = GoldLedger:GetModule("UI")
+        local UI = Copperwise:GetModule("UI")
         if UI then UI:ToggleSettingsFrame() end
     elseif cmd == "help" then
-        print("|cff00ff00GoldLedger:|r " .. L["SLASH_HELP"])
+        print("|cffb87333Copperwise:|r " .. L["SLASH_HELP"])
     else
         local fn, arg = findFeatureSlash(cmd)
         if fn then
@@ -324,7 +324,7 @@ SlashCmdList["GOLDLEDGER"] = function(msg)
             fn(arg)
         else
             -- Default: toggle main window
-            local UI = GoldLedger:GetModule("UI")
+            local UI = Copperwise:GetModule("UI")
             if UI then
                 UI:ToggleMainFrame()
             end
@@ -337,15 +337,15 @@ end
 -------------------------------------------------------------------------------
 
 --- Включает/выключает debug-режим
-function GoldLedger:SetDebug(enabled)
+function Copperwise:SetDebug(enabled)
     debugMode = enabled
-    print("|cff00ff00GoldLedger:|r debug " .. (enabled and "|cff00ff00ON|r" or "|cffff4444OFF|r"))
+    print("|cffb87333Copperwise:|r debug " .. (enabled and "|cff00ff00ON|r" or "|cffff4444OFF|r"))
 end
 
 --- Выводит debug-сообщение в чат (только если debug включён)
 --- @param module string Имя модуля
 --- @param ... any Аргументы для конкатенации
-function GoldLedger:Debug(module, ...)
+function Copperwise:Debug(module, ...)
     if not debugMode then return end
 
     local args = {...}
@@ -360,7 +360,7 @@ end
 --- Дамп таблицы в чат (debug-режим)
 --- @param label string Название
 --- @param tbl table Таблица для вывода
-function GoldLedger:DumpTable(label, tbl)
+function Copperwise:DumpTable(label, tbl)
     if not debugMode then return end
 
     print("|cff888888[GL:Dump]|r " .. label .. ":")
@@ -383,7 +383,7 @@ end
 -- namespace and looks for the convention <ns.X.Frame>.SetFrame; new feature
 -- modules get this for free without touching core.
 -------------------------------------------------------------------------------
-GoldLedger.Events:On("LANGUAGE_CHANGED", function()
+Copperwise.Events:On("LANGUAGE_CHANGED", function()
     local function teardown(target)
         if not target or type(target.SetFrame) ~= "function" then return end
         local f = type(target.GetFrame) == "function" and target.GetFrame() or nil
@@ -399,4 +399,4 @@ end)
 -------------------------------------------------------------------------------
 -- Utility: передаём L в namespace для удобства
 -------------------------------------------------------------------------------
-GoldLedger.L = L
+Copperwise.L = L

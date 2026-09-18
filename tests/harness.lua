@@ -1,4 +1,4 @@
--- Minimal WoW API stub that loads GoldLedger's real Locale/Core/Data/Tracker and
+-- Minimal WoW API stub that loads Copperwise's real Locale/Core/Data/Tracker and
 -- drives bank deposits, withdrawals and other gold changes through PLAYER_MONEY.
 -- Usage: luajit tests/harness.lua [addon directory]
 
@@ -56,12 +56,21 @@ print = print
 local ns = {}
 for _, f in ipairs({ "Locale.lua", "Core.lua", "Data.lua", "Tracker.lua" }) do
   local chunk = assert(loadfile(dir .. "/" .. f))
-  chunk("GoldLedger", ns)
+  chunk("Copperwise", ns)
 end
-fire("ADDON_LOADED", "GoldLedger")
+-- Data left by GoldLedger (still enabled on the first Copperwise login)
+GoldLedgerDB = {
+  characters = { ["Oldchar-Realm"] = { entries = {
+    { timestamp = 1, type = "income", source = "loot", amount = 500 },
+    { timestamp = 2, type = "expense", source = "repair", amount = 200 },
+  }, daily = {}, monthly = {} } },
+  warbandBank = { amount = 123, updated = 1 },
+  settings = { goalAmount = 999 },
+}
+fire("ADDON_LOADED", "Copperwise")
 fire("PLAYER_LOGIN")
 
-local GL = ns.GoldLedger
+local GL = ns.Copperwise
 local Data, Tracker = GL:GetModule("Data"), GL:GetModule("Tracker")
 assert(Data and Tracker, "modules not registered")
 
@@ -78,6 +87,15 @@ local function check(label, cond)
   if not cond then fails = fails + 1 end
 end
 local function last() return Data:GetRecentEntries(1)[1] end
+
+-- 0. One-time import from GoldLedger
+local imported = CopperwiseDB.characters["Oldchar-Realm"]
+check("GoldLedger data imported", imported and #imported.entries == 2 and CopperwiseDB.importedFromGoldLedger ~= nil)
+check("import is a copy, not shared", imported ~= GoldLedgerDB.characters["Oldchar-Realm"])
+check("goal and warband bank imported", CopperwiseDB.settings.goalAmount == 999 and CopperwiseDB.warbandBank.amount == 123)
+GoldLedgerDB.characters["Another-Realm"] = { entries = {} }
+Data:ImportFromGoldLedger()
+check("import only happens once", CopperwiseDB.characters["Another-Realm"] == nil)
 
 -- 1. Warband bank deposit is a transfer, not an expense
 fire("BANKFRAME_OPENED")

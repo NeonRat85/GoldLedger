@@ -1,10 +1,10 @@
 --[[
-    GoldLedger: UI_MainFrame.lua
+    Copperwise: UI_MainFrame.lua
     Main dashboard frame: cards, chart, transactions, goal
 ]]
 
 local ADDON_NAME, ns = ...
-local GoldLedger = ns.GoldLedger
+local Copperwise = ns.Copperwise
 local L = ns.L
 
 -------------------------------------------------------------------------------
@@ -50,10 +50,10 @@ local function CreateMainFrame()
     local TC, T = H.TC, H.T
 
     -- Main frame via UI API (CreatePopup with DIALOG strata so popups cover it)
-    local coreUI = GoldLedger:GetModule("UI")
+    local coreUI = Copperwise:GetModule("UI")
     local f = coreUI:CreatePopup({
-        name   = "GoldLedgerMainFrame",
-        title  = "GoldLedger",
+        name   = "CopperwiseMainFrame",
+        title  = "Copperwise",
         width  = FRAME_WIDTH,
         height = FRAME_HEIGHT,
         strata = "DIALOG",
@@ -76,10 +76,10 @@ local function CreateMainFrame()
     })
     settingsBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", headerRowRightOffset, HEADER_Y)
 
-    -- Dynamic feature module buttons (registered via GoldLedger:RegisterHeaderButton)
+    -- Dynamic feature module buttons (registered via Copperwise:RegisterHeaderButton)
     -- anchor to the LEFT of Settings, growing further left.
     local leftAnchor = settingsBtn
-    local featureButtons = GoldLedger.GetHeaderButtons and GoldLedger:GetHeaderButtons() or {}
+    local featureButtons = Copperwise.GetHeaderButtons and Copperwise:GetHeaderButtons() or {}
     for _, btnDef in ipairs(featureButtons) do
         local labelText = type(btnDef.label) == "function" and btnDef.label() or btnDef.label
         local featureBtn = coreUI:CreateButton(f, {
@@ -91,7 +91,7 @@ local function CreateMainFrame()
         leftAnchor = featureBtn
     end
 
-    table.insert(UISpecialFrames, "GoldLedgerMainFrame")
+    table.insert(UISpecialFrames, "CopperwiseMainFrame")
 
     ---------------------------------------------------------------------------
     -- Row 1: Stat cards
@@ -369,7 +369,7 @@ end
 -- Transaction rows
 -------------------------------------------------------------------------------
 local function CreateEntryRow(parent, index)
-    local coreUI = GoldLedger:GetModule("UI")
+    local coreUI = Copperwise:GetModule("UI")
     local row = coreUI:CreateListRow(parent, {
         index  = index,
         height = ROW_HEIGHT,
@@ -397,7 +397,7 @@ local function CreateEntryRow(parent, index)
         self.detailText:SetText(entry.itemName or "")
 
         local source = entry.source or "unknown"
-        local Tracker = GoldLedger:GetModule("Tracker")
+        local Tracker = Copperwise:GetModule("Tracker")
         local localeKey = Tracker and Tracker:GetSourceLocaleKey(source) or "SRC_UNKNOWN"
         local sc = H.GetSourceColors()
         local color = sc[source] or sc.unknown
@@ -411,7 +411,7 @@ end
 UpdateEntryRows = function()
     if not mainFrame then return end
 
-    local Data = GoldLedger:GetModule("Data")
+    local Data = Copperwise:GetModule("Data")
     if not Data then return end
 
     local allEntries = Data:GetRecentEntries(MAX_VISIBLE)
@@ -453,7 +453,7 @@ end
 UpdateChart = function()
     if not mainFrame or not mainFrame:IsShown() then return end
 
-    local Data = GoldLedger:GetModule("Data")
+    local Data = Copperwise:GetModule("Data")
     if not Data then return end
     local TC, T = H.TC, H.T
 
@@ -483,7 +483,7 @@ UpdateChart = function()
         end
 
         if not mainFrame.chartDayLabels[i] then
-            local coreUI = GoldLedger:GetModule("UI")
+            local coreUI = Copperwise:GetModule("UI")
             local dayLabel = coreUI:CreateLabel(container, { color = "DAY_LABEL" })
             mainFrame.chartDayLabels[i] = dayLabel
         end
@@ -583,7 +583,7 @@ end
 local function UpdateGoal()
     if not mainFrame or not mainFrame:IsShown() then return end
 
-    local Data = GoldLedger:GetModule("Data")
+    local Data = Copperwise:GetModule("Data")
     if not Data then return end
     local TC = H.TC
 
@@ -646,7 +646,7 @@ end
 local function UpdateSummaries()
     if not mainFrame or not mainFrame:IsShown() then return end
 
-    local Data = GoldLedger:GetModule("Data")
+    local Data = Copperwise:GetModule("Data")
     if not Data then return end
     local TC, T = H.TC, H.T
 
@@ -684,7 +684,7 @@ local function UpdateSummaries()
         (monthNet >= 0 and "+" or "-") .. H.GoldFormatter.Abbrev(math.abs(monthNet)),
         mc[1], mc[2], mc[3])
 
-    local TrackerMod = GoldLedger:GetModule("Tracker")
+    local TrackerMod = Copperwise:GetModule("Tracker")
     if TrackerMod then
         local session = TrackerMod:GetSessionStats()
         mainFrame.sessionIncome:SetValue(H.GoldFormatter.Abbrev(session.income), TC("INCOME"))

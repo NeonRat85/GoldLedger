@@ -1,5 +1,5 @@
 --[[
-    GoldLedger: Data.lua
+    Copperwise: Data.lua
     Pattern: Facade
 
     Единый интерфейс для работы с данными:
@@ -10,11 +10,11 @@
 ]]
 
 local ADDON_NAME, ns = ...
-local GoldLedger = ns.GoldLedger
+local Copperwise = ns.Copperwise
 local L = ns.L
 
 local Data = {}
-GoldLedger:RegisterModule("Data", Data)
+Copperwise:RegisterModule("Data", Data)
 
 -------------------------------------------------------------------------------
 -- Constants
@@ -91,13 +91,14 @@ end
 --- Инициализация SavedVariables
 function Data:OnInitialize()
     -- Создаём или мёржим с defaults
-    if not GoldLedgerDB then
-        GoldLedgerDB = {}
+    if not CopperwiseDB then
+        CopperwiseDB = {}
     end
-    ApplyDefaults(GoldLedgerDB, DB_DEFAULTS)
+    ApplyDefaults(CopperwiseDB, DB_DEFAULTS)
+    self:ImportFromGoldLedger()
 
     -- Восстановить сохранённый язык
-    local savedLang = GoldLedgerDB.settings.language
+    local savedLang = CopperwiseDB.settings.language
     if savedLang and savedLang ~= "auto" then
         L:SetLocale(savedLang)
     end
@@ -109,34 +110,69 @@ function Data:OnInitialize()
     self:CleanupOldEntries()
 end
 
+local function DeepCopy(value)
+    if type(value) ~= "table" then return value end
+    local copy = {}
+    for k, v in pairs(value) do copy[k] = DeepCopy(v) end
+    return copy
+end
+
+--- One-time import for players switching from GoldLedger, which Copperwise is
+--- based on. A SavedVariables table is only loaded with the addon that owns it,
+--- so this works when GoldLedger is still enabled on the first Copperwise login;
+--- after that GoldLedger can be disabled. Only runs while Copperwise has no data.
+function Data:ImportFromGoldLedger()
+    local old = _G.GoldLedgerDB
+    if type(old) ~= "table" or type(old.characters) ~= "table" then return end
+    if next(CopperwiseDB.characters) ~= nil or CopperwiseDB.importedFromGoldLedger then return end
+
+    local characters, entries = 0, 0
+    for key, charData in pairs(old.characters) do
+        CopperwiseDB.characters[key] = DeepCopy(charData)
+        characters = characters + 1
+        entries = entries + (type(charData.entries) == "table" and #charData.entries or 0)
+    end
+    if type(old.warbandBank) == "table" then
+        CopperwiseDB.warbandBank = DeepCopy(old.warbandBank)
+    end
+    if type(old.settings) == "table" and old.settings.goalAmount then
+        CopperwiseDB.settings.goalAmount = old.settings.goalAmount
+    end
+    CopperwiseDB.importedFromGoldLedger = time()
+
+    C_Timer.After(2, function()
+        print("|cffb87333Copperwise|r " .. L["IMPORTED_GOLDLEDGER"]:format(entries, characters))
+    end)
+end
+
 --- Гарантирует наличие данных текущего персонажа
 function Data:EnsureCharacterData()
     local key = self:GetCharKey()
-    if not GoldLedgerDB.characters[key] then
-        GoldLedgerDB.characters[key] = {
+    if not CopperwiseDB.characters[key] then
+        CopperwiseDB.characters[key] = {
             entries = {},
             daily = {},
             monthly = {},
         }
     end
-    return GoldLedgerDB.characters[key]
+    return CopperwiseDB.characters[key]
 end
 
 -------------------------------------------------------------------------------
 -- Module Namespace API (Ace3-inspired)
--- Feature modules get their own section in GoldLedgerDB.modules[name]
+-- Feature modules get their own section in CopperwiseDB.modules[name]
 -------------------------------------------------------------------------------
 
 --- Регистрирует namespace для feature-модуля с defaults
 --- @param name string Имя namespace (e.g. "auction")
 --- @param defaults table Структура по умолчанию
---- @return table Ссылка на namespace data в GoldLedgerDB.modules[name]
+--- @return table Ссылка на namespace data в CopperwiseDB.modules[name]
 function Data:RegisterNamespace(name, defaults)
-    if not GoldLedgerDB.modules then
-        GoldLedgerDB.modules = {}
+    if not CopperwiseDB.modules then
+        CopperwiseDB.modules = {}
     end
-    if not GoldLedgerDB.modules[name] then
-        GoldLedgerDB.modules[name] = {}
+    if not CopperwiseDB.modules[name] then
+        CopperwiseDB.modules[name] = {}
     end
     -- Merge defaults (не перезаписывает существующие)
     if defaults then
@@ -150,16 +186,16 @@ function Data:RegisterNamespace(name, defaults)
                 end
             end
         end
-        applyDefaults(GoldLedgerDB.modules[name], defaults)
+        applyDefaults(CopperwiseDB.modules[name], defaults)
     end
-    return GoldLedgerDB.modules[name]
+    return CopperwiseDB.modules[name]
 end
 
 --- Возвращает namespace data для feature-модуля
 --- @param name string Имя namespace
 --- @return table|nil
 function Data:GetNamespace(name)
-    return GoldLedgerDB and GoldLedgerDB.modules and GoldLedgerDB.modules[name]
+    return CopperwiseDB and CopperwiseDB.modules and CopperwiseDB.modules[name]
 end
 
 -------------------------------------------------------------------------------
@@ -250,13 +286,13 @@ function Data:RefreshWarbandBankMoney()
     if not (C_Bank and C_Bank.FetchDepositedMoney and Enum and Enum.BankType) then return end
     local amount = C_Bank.FetchDepositedMoney(Enum.BankType.Account)
     if type(amount) ~= "number" then return end
-    GoldLedgerDB.warbandBank = { amount = amount, updated = time() }
+    CopperwiseDB.warbandBank = { amount = amount, updated = time() }
 end
 
 --- Last known warband bank balance in copper (0 if never seen)
 --- @return number
 function Data:GetWarbandBankMoney()
-    local wb = GoldLedgerDB and GoldLedgerDB.warbandBank
+    local wb = CopperwiseDB and CopperwiseDB.warbandBank
     return wb and wb.amount or 0
 end
 
@@ -372,7 +408,7 @@ end
 --- Возвращает настройки аддона
 --- @return table
 function Data:GetSettings()
-    return GoldLedgerDB.settings
+    return CopperwiseDB.settings
 end
 
 -------------------------------------------------------------------------------
@@ -382,7 +418,7 @@ end
 --- Сбрасывает данные текущего персонажа
 function Data:ResetCharacterData()
     local key = self:GetCharKey()
-    GoldLedgerDB.characters[key] = nil
+    CopperwiseDB.characters[key] = nil
     self:EnsureCharacterData()
 end
 
@@ -393,18 +429,18 @@ end
 --- Устанавливает цель накопления (в copper)
 --- @param amount number Сумма в copper
 function Data:SetGoal(amount)
-    GoldLedgerDB.settings.goalAmount = amount
+    CopperwiseDB.settings.goalAmount = amount
 end
 
 --- Возвращает текущую цель (в copper), 0 если нет
 --- @return number
 function Data:GetGoal()
-    return GoldLedgerDB.settings.goalAmount or 0
+    return CopperwiseDB.settings.goalAmount or 0
 end
 
 --- Сбрасывает цель
 function Data:ClearGoal()
-    GoldLedgerDB.settings.goalAmount = nil
+    CopperwiseDB.settings.goalAmount = nil
 end
 
 --- Возвращает прогресс к цели
@@ -449,12 +485,12 @@ end
 function Data:GetAllCharactersSummary(period)
     period = period or "month"
     local result = {}
-    if not GoldLedgerDB or not GoldLedgerDB.characters then return result end
+    if not CopperwiseDB or not CopperwiseDB.characters then return result end
 
     local dateKey = self:GetDateKey()
     local monthKey = self:GetMonthKey()
 
-    for charKey, charData in pairs(GoldLedgerDB.characters) do
+    for charKey, charData in pairs(CopperwiseDB.characters) do
         local income, expense = 0, 0
 
         if period == "day" then

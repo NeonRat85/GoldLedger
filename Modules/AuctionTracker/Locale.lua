@@ -1,5 +1,5 @@
 --[[
-    GoldLedger / AuctionTracker: Locale.lua
+    Copperwise / AuctionTracker: Locale.lua
     Self-contained localization for this module.
     Does not touch ns.L (core locale).
 ]]
@@ -9,7 +9,7 @@ ns.AuctionTracker = ns.AuctionTracker or {}
 
 local enUS = {
     AUCTION_BUTTON          = "Auction",
-    AUCTION_TITLE           = "GoldLedger — Auction History",
+    AUCTION_TITLE           = "Copperwise — Auction History",
 
     -- Filter labels
     AUCTION_PERIOD          = "Period:",
@@ -54,7 +54,7 @@ local enUS = {
 
 local ruRU = {
     AUCTION_BUTTON          = "Аукцион",
-    AUCTION_TITLE           = "GoldLedger — История аукциона",
+    AUCTION_TITLE           = "Copperwise — История аукциона",
 
     AUCTION_PERIOD          = "Период:",
     AUCTION_TYPE            = "Тип:",

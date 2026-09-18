@@ -1,18 +1,18 @@
 --[[
-    GoldLedger: Themes/ThemeManager.lua
+    Copperwise: Themes/ThemeManager.lua
     Native WoW color palette. The multi-theme system was removed when
-    GoldLedger moved to native WoW UI templates — only one palette remains.
+    Copperwise moved to native WoW UI templates — only one palette remains.
 
     Public API: GetColor(key) → table | C(key) → r,g,b,a | GetSourceColors().
     Module name "Themes" is kept for back-compat with feature modules that
-    call `GoldLedger:GetModule("Themes"):C(...)`.
+    call `Copperwise:GetModule("Themes"):C(...)`.
 ]]
 
 local ADDON_NAME, ns = ...
-local GoldLedger = ns.GoldLedger
+local Copperwise = ns.Copperwise
 
 local Themes = {}
-GoldLedger:RegisterModule("Themes", Themes)
+Copperwise:RegisterModule("Themes", Themes)
 
 -------------------------------------------------------------------------------
 -- Single native color palette

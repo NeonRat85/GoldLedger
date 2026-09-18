@@ -1,5 +1,5 @@
 --[[
-    GoldLedger: UI_Animations.lua
+    Copperwise: UI_Animations.lua
     Animation helpers: fade, slide, chart bar grow
 ]]
 

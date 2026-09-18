@@ -1,19 +1,19 @@
 local ADDON_NAME, ns = ...
 ns.Characters = ns.Characters or {}
 
-local GoldLedger = ns.GoldLedger
+local Copperwise = ns.Copperwise
 local Module = {}
 ns.Characters.Module = Module
 
-if GoldLedger and GoldLedger.RegisterFeature then
-    GoldLedger:RegisterFeature("characters", Module)
+if Copperwise and Copperwise.RegisterFeature then
+    Copperwise:RegisterFeature("characters", Module)
 end
 
 function Module:OnInitialize() end
 
 function Module:OnEnable()
-    if GoldLedger.RegisterHeaderButton then
-        GoldLedger:RegisterHeaderButton("characters", function()
+    if Copperwise.RegisterHeaderButton then
+        Copperwise:RegisterHeaderButton("characters", function()
             local L = ns.Characters.L
             return L and L["CHARS_BUTTON"] or "Characters"
         end, function()
@@ -22,8 +22,8 @@ function Module:OnEnable()
         end)
     end
 
-    if GoldLedger.RegisterSlashCommand then
-        GoldLedger:RegisterSlashCommand("chars", function()
+    if Copperwise.RegisterSlashCommand then
+        Copperwise:RegisterSlashCommand("chars", function()
             local Frame = ns.Characters.Frame
             if Frame and Frame.Toggle then Frame:Toggle() end
         end)

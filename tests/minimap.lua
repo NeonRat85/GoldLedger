@@ -70,7 +70,7 @@ local ns = {
     L = setmetatable({}, { __index = function(_, k) return k end }),
     UI_Helpers = { GoldFormatter = { Full = function(c) return tostring(math.abs(c)) end } },  -- like the real one: unsigned
 }
-ns.GoldLedger = {
+ns.Copperwise = {
     RegisterFeature = function(_, _, m) ns.feature = m end,
     GetModule = function(_, name)
         if name == "Themes" then return { GetColor = function() return { 1, 1, 1 } end } end
@@ -84,23 +84,23 @@ ns.GoldLedger = {
 }
 
 -- Pre-LibDBIcon settings from 2.5.0: hidden via the old module's key, custom position
-GoldLedgerDB = { settings = { minimapPos = 55.9, showMinimap = true, minimapHidden = true } }
-load("Modules/Minimap/Minimap.lua", "GoldLedger", ns)
+CopperwiseDB = { settings = { minimapPos = 55.9, showMinimap = true, minimapHidden = true } }
+load("Modules/Minimap/Minimap.lua", "Copperwise", ns)
 
 local LDBIcon = LibStub("LibDBIcon-1.0")
-local db = GoldLedgerDB.settings
-check("data object registered with LibDataBroker", LibStub("LibDataBroker-1.1"):GetDataObjectByName("GoldLedger") ~= nil)
+local db = CopperwiseDB.settings
+check("data object registered with LibDataBroker", LibStub("LibDataBroker-1.1"):GetDataObjectByName("Copperwise") ~= nil)
 
--- In game both GoldLedger and LibDBIcon handle PLAYER_LOGIN; here GoldLedger registers
+-- In game both Copperwise and LibDBIcon handle PLAYER_LOGIN; here Copperwise registers
 -- first, so LibDBIcon applies the saved position/visibility when its handler runs.
 ns.feature:OnEnable()
 firePlayerLogin()
-check("registered with LibDBIcon", LDBIcon:IsRegistered("GoldLedger"))
+check("registered with LibDBIcon", LDBIcon:IsRegistered("Copperwise"))
 check("migrated position", db.minimap and db.minimap.minimapPos == 55.9)
 check("migrated hidden state", db.minimap.hide == true and db.showMinimap == false)
 check("old keys removed", db.minimapPos == nil and db.minimapHidden == nil)
 
-local button = LDBIcon:GetMinimapButton("GoldLedger")
+local button = LDBIcon:GetMinimapButton("Copperwise")
 check("button created", button ~= nil)
 check("button starts hidden", button and not button.shown)
 
@@ -124,14 +124,14 @@ check("click toggles main window", toggled == 1)
 
 -- Enabling twice must not re-register
 ns.feature:OnEnable()
-check("second OnEnable is a no-op", LDBIcon:IsRegistered("GoldLedger"))
+check("second OnEnable is a no-op", LDBIcon:IsRegistered("Copperwise"))
 
 -- Fresh install, registering after LibDBIcon has already seen PLAYER_LOGIN
 LDBIcon.objects = {}
-GoldLedgerDB = { settings = { showMinimap = true } }
+CopperwiseDB = { settings = { showMinimap = true } }
 ns.feature:OnEnable()
-local fresh = LDBIcon:GetMinimapButton("GoldLedger")
-local m = GoldLedgerDB.settings.minimap
+local fresh = LDBIcon:GetMinimapButton("Copperwise")
+local m = CopperwiseDB.settings.minimap
 check("fresh install defaults", m.minimapPos == 225 and m.hide == false)
 check("fresh install button shown", fresh and fresh.shown)
 

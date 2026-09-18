@@ -1,10 +1,10 @@
 --[[
-    GoldLedger: Locale.lua
+    Copperwise: Locale.lua
     Pattern: Registry with __index fallback
 
     Локализация загружается первой. Английский — базовый язык (fallback).
     Русские строки перекрывают английские через GetLocale().
-    Доступ: GoldLedger.L["KEY"]
+    Доступ: Copperwise.L["KEY"]
 ]]
 
 local ADDON_NAME, ns = ...
@@ -14,9 +14,10 @@ local ADDON_NAME, ns = ...
 -------------------------------------------------------------------------------
 local defaultStrings = {
     -- General
-    ["ADDON_LOADED"]        = "|cff00ff00GoldLedger|r loaded. Type |cfffff569/gl|r to open.",
-    ["ADDON_TITLE"]         = "GoldLedger",
-    ["SLASH_HELP"]          = "Usage: /gl — toggle window, /gl reset — reset data",
+    ["ADDON_LOADED"]        = "|cffb87333Copperwise|r loaded. Type |cfffff569/cw|r to open.",
+    ["IMPORTED_GOLDLEDGER"] = "imported %d transactions for %d characters from GoldLedger. You can disable GoldLedger now.",
+    ["ADDON_TITLE"]         = "Copperwise",
+    ["SLASH_HELP"]          = "Usage: /cw — toggle window, /cw reset — reset data",
     ["RESET_CONFIRM"]       = "All data for this character has been reset.",
 
     -- UI Headers
@@ -32,7 +33,7 @@ local defaultStrings = {
     ["HEADER_ON_HAND"]      = "On Hand",
 
     -- Tooltip
-    ["TOOLTIP_TITLE"]       = "GoldLedger",
+    ["TOOLTIP_TITLE"]       = "Copperwise",
     ["TOOLTIP_HINT"]        = "|cffffffffClick|r to toggle window",
     ["TOOLTIP_TODAY"]       = "Today",
     ["TOOLTIP_MONTH"]       = "This Month",
@@ -88,7 +89,7 @@ local defaultStrings = {
     ["GOAL_TOO_FAR"]         = "Too far at this rate",
     ["GOAL_SET_BUTTON"]      = "Set goal",
     ["GOAL_CHANGE_BUTTON"]   = "Change goal",
-    ["GOAL_USAGE"]           = "Usage: /gl goal <gold> | /gl goal clear",
+    ["GOAL_USAGE"]           = "Usage: /cw goal <gold> | /cw goal clear",
     ["GOAL_NONE"]            = "Click to set goal",
     ["GOAL_CLICK_HINT"]      = "|cffffffffClick|r to change goal",
 
@@ -118,8 +119,9 @@ local defaultStrings = {
 -------------------------------------------------------------------------------
 local ruStrings = {
     -- General
-    ["ADDON_LOADED"]        = "|cff00ff00GoldLedger|r загружен. Введите |cfffff569/gl|r для открытия.",
-    ["SLASH_HELP"]          = "Использование: /gl — окно, /gl reset — сброс данных",
+    ["ADDON_LOADED"]        = "|cffb87333Copperwise|r загружен. Введите |cfffff569/cw|r для открытия.",
+    ["IMPORTED_GOLDLEDGER"] = "импортировано %d записей для %d персонажей из GoldLedger. GoldLedger можно отключить.",
+    ["SLASH_HELP"]          = "Использование: /cw — окно, /cw reset — сброс данных",
     ["RESET_CONFIRM"]       = "Все данные персонажа сброшены.",
 
     -- UI Headers
@@ -190,7 +192,7 @@ local ruStrings = {
     ["GOAL_TOO_FAR"]         = "При текущем темпе — очень нескоро",
     ["GOAL_SET_BUTTON"]      = "Установить цель",
     ["GOAL_CHANGE_BUTTON"]   = "Изменить цель",
-    ["GOAL_USAGE"]           = "/gl goal <сумма в голде> | /gl goal clear",
+    ["GOAL_USAGE"]           = "/cw goal <сумма в голде> | /cw goal clear",
     ["GOAL_NONE"]            = "Нажмите для установки цели",
     ["GOAL_CLICK_HINT"]      = "|cffffffffКлик|r — изменить цель",
 

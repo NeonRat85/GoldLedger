@@ -1,5 +1,5 @@
 --[[
-    GoldLedger / Calculator: Locale.lua
+    Copperwise / Calculator: Locale.lua
     Self-contained localization for this module.
 ]]
 

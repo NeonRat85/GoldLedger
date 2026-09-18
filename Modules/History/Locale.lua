@@ -1,5 +1,5 @@
 --[[
-    GoldLedger / History: Locale.lua
+    Copperwise / History: Locale.lua
     Self-contained localization for this module.
 ]]
 

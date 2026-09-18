@@ -1,55 +1,55 @@
-# GoldLedger (fork)
+# Copperwise
 
-A World of Warcraft addon that tracks your gold income and expenses, with daily and monthly summaries, charts, a savings goal and multi-character support.
+A World of Warcraft addon that tracks every copper in and out: vendors, the Auction House, mail, loot, quests, repairs, trades and your warband bank. Daily and monthly summaries, a chart, a savings goal, and every character on your account.
 
-![Version](https://img.shields.io/badge/version-2.5.0-blue)
+![Version](https://img.shields.io/badge/version-1.0.0-b87333)
 ![Interface](https://img.shields.io/badge/interface-120100-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-This is a fork of [GoldLedger](https://www.curseforge.com/wow/addons/goldledger) by **tum24**, released under the MIT License. The first commit in this repository is the unmodified 2.4.4 release; everything after it is changes made in this fork. See [CHANGELOG.md](CHANGELOG.md).
-
-## What this fork changes
-
-- **Warband bank deposits and withdrawals are transfers, not expenses or income.** They show in the transaction list tagged *Bank* but don't affect totals, charts or session stats.
-- **Warband bank balance** is shown under *On Hand* and in the minimap tooltip, and counts towards your goal.
-- **Minimap button uses LibDBIcon**, so it behaves like other addons' buttons and works with minimap button managers.
-- **Guild bank** gold is labelled *Guild* instead of *Other*. It still counts as income/expense, because gold given to the guild is no longer yours.
-
 ## Features
 
-- **Automatic tracking** from vendors, repairs, the auction house, mail, quests, loot, trades and banks
-- **Auction House tracker** with sales, purchases, deposits and commission
+- **Automatic tracking** from vendors, repairs, the Auction House, mail, quests, loot, trades, guild bank and warband bank
+- **Item names for sales**: what you sold to vendors (including Sell Junk) and on the Auction House, with quantities
+- **Warband bank aware**: deposits and withdrawals are transfers, not income or spending, and the bank balance counts towards your goal
+- **Auction House tracker** with sales, purchases, listing deposits and the AH cut
 - **Daily, monthly and session summaries**, with an interactive 7-day / 30-day / all-time chart
 - **Transaction history** with pagination and filters by source, type and minimum amount
 - **Source breakdown** for today, week, month or all time
 - **Savings goal** with a progress bar and ETA
 - **Multi-character overview**, built-in calculator and CSV export
+- **Minimap button** (LibDBIcon) with today's and this month's totals
 - **English and Russian**, switchable in game
 - **Modular**: delete any `Modules/<Name>/` folder to remove that feature
 
 ## Installation
 
-Copy the `GoldLedger` folder into your AddOns directory:
+Copy the `Copperwise` folder into your AddOns directory:
 
 ```
-World of Warcraft/_retail_/Interface/AddOns/GoldLedger/
+World of Warcraft/_retail_/Interface/AddOns/Copperwise/
 ```
 
-Restart the client or `/reload`. If you previously installed GoldLedger through the CurseForge app, remove it there first so an update doesn't overwrite this fork.
+Restart the client (a new addon folder isn't picked up by `/reload`).
+
+### Coming from GoldLedger
+
+Keep GoldLedger enabled for your first login with Copperwise. Copperwise copies your GoldLedger history, warband bank balance and goal, prints how much it imported, and from then on you can disable or remove GoldLedger. The import runs once, only while Copperwise has no data of its own.
 
 ## Usage
 
 | Command | Effect |
 | --- | --- |
-| `/gl` | Toggle the main window |
-| `/gl auction` or `/gla` | Auction history |
-| `/gl history` | Transaction history |
-| `/gl chars` | Characters overview |
-| `/gl calc` | Calculator |
-| `/gl export` | CSV export |
-| `/gl goal` | Set a savings goal |
-| `/gl reset` | Reset the current character's data |
-| `/gl help` | List all commands |
+| `/cw` | Toggle the main window |
+| `/cw auction` or `/cwa` | Auction history |
+| `/cw history` | Transaction history |
+| `/cw chars` | Characters overview |
+| `/cw calc` | Calculator |
+| `/cw export` | CSV export |
+| `/cw goal` | Set a savings goal |
+| `/cw reset` | Reset the current character's data |
+| `/cw help` | List all commands |
+
+Your data is saved in `WTF/Account/<account>/SavedVariables/Copperwise.lua` when you log out or `/reload`.
 
 ## Development
 
@@ -61,10 +61,14 @@ luajit tests/minimap.lua .
 luajit tests/globals.lua .
 ```
 
-`tests/harness.lua` loads the addon's real core files against a minimal WoW API stub and drives gold changes through `PLAYER_MONEY`. `tests/minimap.lua` loads the embedded libraries and the minimap module, and checks registration, the tooltip, visibility and settings migration. CI runs both, along with a syntax check of every Lua file and a check that every file listed in `GoldLedger.toc` exists.
+`tests/harness.lua` loads the addon's core files against a minimal WoW API stub and drives gold changes through `PLAYER_MONEY`: bank transfers, vendor sales, the GoldLedger import and more. `tests/minimap.lua` loads the embedded libraries and the minimap module. `tests/globals.lua` fails if the addon assigns a global it doesn't own, which would taint Blizzard code. CI runs all three, plus a syntax check of every Lua file and a check that every file in `Copperwise.toc` exists.
+
+## Credits
+
+Copperwise is based on [GoldLedger](https://www.curseforge.com/wow/addons/goldledger) by **tum24**, released under the MIT License. The first commit in this repository is the unmodified GoldLedger 2.4.4; see [CHANGELOG.md](CHANGELOG.md) for everything since.
 
 ## License
 
-MIT. Original work © tum24; modifications © NeonRat85. See [LICENSE](LICENSE).
+MIT. © NeonRat85; original GoldLedger © tum24. See [LICENSE](LICENSE).
 
 Embedded libraries in `Libs/` keep their own licences: LibStub and LibDataBroker-1.1 are public domain; CallbackHandler-1.0 and LibDBIcon-1.0 use the Ace3 BSD licence. See [Libs/README.md](Libs/README.md).

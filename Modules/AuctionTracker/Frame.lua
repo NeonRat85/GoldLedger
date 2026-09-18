@@ -1,5 +1,5 @@
 --[[
-    GoldLedger / AuctionTracker: Frame.lua
+    Copperwise / AuctionTracker: Frame.lua
     Auction History popup UI.
     Layout inspired by GoldPulse mockup:
       [Period ▼] [Type ▼] [Search______]
@@ -58,7 +58,7 @@ end
 -- Transaction row
 -------------------------------------------------------------------------------
 local function CreateRow(parent, index)
-    local coreUI = ns.GoldLedger and ns.GoldLedger:GetModule("UI")
+    local coreUI = ns.Copperwise and ns.Copperwise:GetModule("UI")
     local row = coreUI:CreateListRow(parent, {
         index = index, height = ROW_HEIGHT, altBg = "ROW_ALT",
     })
@@ -124,11 +124,11 @@ end
 function Frame:Create()
     local helpers = H()
     local l = L()
-    local coreUI = ns.GoldLedger and ns.GoldLedger:GetModule("UI")
+    local coreUI = ns.Copperwise and ns.Copperwise:GetModule("UI")
 
     -- Standardized popup (title bar, close button, drag, backdrop, ESC-close, BringToFront on show)
     local f = coreUI:CreatePopup({
-        name   = "GoldLedgerAuctionFrame",
+        name   = "CopperwiseAuctionFrame",
         title  = l["AUCTION_TITLE"],
         width  = 720,
         height = 500,

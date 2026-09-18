@@ -1,5 +1,5 @@
 --[[
-    GoldLedger / Minimap: Minimap.lua
+    Copperwise / Minimap: Minimap.lua
     Minimap button via LibDataBroker-1.1 + LibDBIcon-1.0: summary tooltip,
     click-to-toggle, drag-to-reposition (handled by LibDBIcon).
     Self-contained feature module.
@@ -8,7 +8,7 @@
 local ADDON_NAME, ns = ...
 ns.Minimap = ns.Minimap or {}
 
-local GoldLedger = ns.GoldLedger
+local Copperwise = ns.Copperwise
 local L = ns.L  -- core locale for tooltip strings (TOOLTIP_TITLE etc — kept in core Locale)
 
 local LDB = LibStub("LibDataBroker-1.1")
@@ -17,12 +17,12 @@ local LDBIcon = LibStub("LibDBIcon-1.0")
 local Module = {}
 ns.Minimap.Module = Module
 
-if GoldLedger and GoldLedger.RegisterFeature then
-    GoldLedger:RegisterFeature("minimap", Module)
+if Copperwise and Copperwise.RegisterFeature then
+    Copperwise:RegisterFeature("minimap", Module)
 end
 
 local function T(key)
-    local Themes = GoldLedger and GoldLedger:GetModule("Themes")
+    local Themes = Copperwise and Copperwise:GetModule("Themes")
     if Themes and Themes.GetColor then return Themes:GetColor(key) end
     return { 1, 1, 1 }
 end
@@ -44,11 +44,11 @@ local function AddPeriodLines(tooltip, summary, GoldFormatter)
 end
 
 local function OnTooltipShow(tooltip)
-    tooltip:AddLine(L and L["TOOLTIP_TITLE"] or "GoldLedger", 1, 0.84, 0)
+    tooltip:AddLine(L and L["TOOLTIP_TITLE"] or "Copperwise", 0.85, 0.53, 0.30)  -- copper
 
     local helpers = ns.UI_Helpers
     local GoldFormatter = helpers and helpers.GoldFormatter
-    local Data = GoldLedger and GoldLedger:GetModule("Data")
+    local Data = Copperwise and Copperwise:GetModule("Data")
     if Data and GoldFormatter then
         local today = Data:GetDailySummary()
         tooltip:AddLine(" ")
@@ -72,19 +72,19 @@ end
 local dataObject = LDB:NewDataObject(ADDON_NAME, {
     type = "launcher",
     text = ADDON_NAME,
-    icon = "Interface\\Icons\\INV_Misc_Coin_01",
+    icon = "Interface\\Icons\\INV_Misc_Coin_05",
     OnClick = function()
-        local UI = GoldLedger and GoldLedger:GetModule("UI")
+        local UI = Copperwise and Copperwise:GetModule("UI")
         if UI and UI.ToggleMainFrame then UI:ToggleMainFrame() end
     end,
     OnTooltipShow = OnTooltipShow,
 })
 ns.Minimap.DataObject = dataObject
 
---- LibDBIcon's saved state ({ hide, minimapPos }) in GoldLedgerDB.settings.minimap.
+--- LibDBIcon's saved state ({ hide, minimapPos }) in CopperwiseDB.settings.minimap.
 --- Migrates the pre-LibDBIcon keys (minimapPos, showMinimap, minimapHidden) once.
 local function GetIconDB()
-    local settings = _G.GoldLedgerDB and _G.GoldLedgerDB.settings
+    local settings = _G.CopperwiseDB and _G.CopperwiseDB.settings
     if not settings then return nil end
     if type(settings.minimap) ~= "table" then
         settings.minimap = {
@@ -112,7 +112,7 @@ function ns.Minimap.SetVisible(visible)
     local db = GetIconDB()
     if not db then return end
     db.hide = not visible
-    _G.GoldLedgerDB.settings.showMinimap = visible and true or false
+    _G.CopperwiseDB.settings.showMinimap = visible and true or false
     if not LDBIcon:IsRegistered(ADDON_NAME) then return end
     if visible then LDBIcon:Show(ADDON_NAME) else LDBIcon:Hide(ADDON_NAME) end
 end

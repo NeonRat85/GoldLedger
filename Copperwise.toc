@@ -1,12 +1,13 @@
 ## Interface: 120100
-## Title: GoldLedger
-## Notes: Gold income/expense tracker with themes and multi-language support | Трекер голды с темами и мультиязычностью
-## Author: ivano (fork by NeonRat85)
-## Version: 2.5.0
-## SavedVariables: GoldLedgerDB
-## X-Website: https://github.com/NeonRat85/GoldLedger
-## X-Original-Website: https://www.curseforge.com/wow/addons/goldledger
-## IconTexture: Interface\Icons\INV_Misc_Coin_01
+## Title: Copperwise
+## Notes: Tracks every copper in and out: vendors, Auction House, mail, loot, quests, repairs and warband bank transfers | Учёт доходов и расходов золота
+## Author: NeonRat85
+## Version: 1.0.0
+## SavedVariables: CopperwiseDB
+## IconTexture: Interface\Icons\INV_Misc_Coin_05
+## X-Website: https://github.com/NeonRat85/Copperwise
+## X-Credits: Based on GoldLedger by tum24 (https://www.curseforge.com/wow/addons/goldledger), MIT License
+## X-License: MIT
 
 Libs\LibStub\LibStub.lua
 Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua

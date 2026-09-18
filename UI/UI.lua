@@ -1,37 +1,37 @@
 --[[
-    GoldLedger: UI.lua
+    Copperwise: UI.lua
     Core UI module: helpers, GoldFormatter, minimap button, public API
     Sub-modules: UI_MainFrame, UI_Popups, UI_Settings
 ]]
 
 local ADDON_NAME, ns = ...
-local GoldLedger = ns.GoldLedger
+local Copperwise = ns.Copperwise
 local L = ns.L
 
 local UI = {}
-GoldLedger:RegisterModule("UI", UI)
+Copperwise:RegisterModule("UI", UI)
 
 -------------------------------------------------------------------------------
 -- Theme helpers (must be before any UI creation functions)
 -------------------------------------------------------------------------------
 
 local function T(key)
-    local Themes = GoldLedger:GetModule("Themes")
+    local Themes = Copperwise:GetModule("Themes")
     return Themes:GetColor(key)
 end
 
 local function TC(key)
-    local Themes = GoldLedger:GetModule("Themes")
+    local Themes = Copperwise:GetModule("Themes")
     return Themes:C(key)
 end
 
 local function GetSourceColors()
-    local Themes = GoldLedger:GetModule("Themes")
+    local Themes = Copperwise:GetModule("Themes")
     return Themes:GetSourceColors()
 end
 
 local function GetBackdrop()
-    local Themes = GoldLedger:GetModule("Themes")
+    local Themes = Copperwise:GetModule("Themes")
     return {
         bgFile = Themes:GetBgTexture(),
         edgeFile = Themes:GetEdgeTexture(),
@@ -41,7 +41,7 @@ local function GetBackdrop()
 end
 
 local function GetSmallBackdrop()
-    local Themes = GoldLedger:GetModule("Themes")
+    local Themes = Copperwise:GetModule("Themes")
     return {
         bgFile = Themes:GetBgTexture(),
         edgeFile = Themes:GetEdgeTexture(),
@@ -51,7 +51,7 @@ local function GetSmallBackdrop()
 end
 
 local function SnapToMain(frame)
-    local main = GoldLedgerMainFrame
+    local main = CopperwiseMainFrame
     if not main then return end
     frame:ClearAllPoints()
     frame:SetPoint("TOPLEFT", main, "TOPRIGHT", 8, 0)
@@ -129,7 +129,7 @@ end
 --- @param direction string|nil for entryType "transfer": "deposit"|"withdraw"
 function GoldFormatter.Colored(copper, entryType, direction)
     local text = GoldFormatter.Full(copper)
-    local Themes = GoldLedger:GetModule("Themes")
+    local Themes = Copperwise:GetModule("Themes")
     local c
     if entryType == "transfer" then
         -- Bank transfer: neutral colour, sign shows which way the gold moved
@@ -218,7 +218,7 @@ local colorKeyMap = {
 UI.Colors = setmetatable({}, {
     __index = function(_, key)
         local themeKey = colorKeyMap[key] or key
-        local Themes = GoldLedger:GetModule("Themes")
+        local Themes = Copperwise:GetModule("Themes")
         if Themes and Themes.GetColor then
             return Themes:GetColor(themeKey)
         end
@@ -992,22 +992,22 @@ end
 function UI:OnEnable()
     -- Minimap is now a feature module (ns.Minimap), creates its own button on OnEnable.
     -- Respect legacy showMinimap=false setting via module facade
-    if GoldLedgerDB and GoldLedgerDB.settings and GoldLedgerDB.settings.showMinimap == false then
+    if CopperwiseDB and CopperwiseDB.settings and CopperwiseDB.settings.showMinimap == false then
         if ns.Minimap and ns.Minimap.SetVisible then ns.Minimap.SetVisible(false) end
     end
 
-    local Tracker = GoldLedger:GetModule("Tracker")
+    local Tracker = Copperwise:GetModule("Tracker")
     if Tracker then
         Tracker:OnGoldChanged(function()
             local MF = ns.UI_MainFrame
             if MF then MF.UpdateSummaries() end
         end)
-        GoldLedger.Events:On("WARBAND_BANK_UPDATED", function()
+        Copperwise.Events:On("WARBAND_BANK_UPDATED", function()
             local MF = ns.UI_MainFrame
             if MF then MF.UpdateSummaries() end
         end)
         -- An existing entry gained details (e.g. vendor sale item names)
-        GoldLedger.Events:On("ENTRIES_UPDATED", function()
+        Copperwise.Events:On("ENTRIES_UPDATED", function()
             local MF = ns.UI_MainFrame
             if MF then MF.UpdateSummaries() end
             local History = ns.History and ns.History.Frame

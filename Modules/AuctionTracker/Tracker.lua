@@ -1,5 +1,5 @@
 --[[
-    GoldLedger / AuctionTracker: Tracker.lua
+    Copperwise / AuctionTracker: Tracker.lua
 
     Architecture: AMENDER, not WRITER.
     Core Tracker.lua already records all gold changes (including AH context).
@@ -103,7 +103,7 @@ function Tracker:OnCoreGoldChanged(amount, entryType, total, source)
     -- Handle both source="ah" (core detected) and source="mail" (core missed, we check ourselves)
     if source ~= "ah" and source ~= "mail" then return end
 
-    local GL = ns.GoldLedger
+    local GL = ns.Copperwise
     GL:Debug("AuctionTracker", "OnCoreGoldChanged | source:", source, "| type:", entryType, "| amount:", amount,
         "| pendingPurchase:", pendingPurchase and "YES" or "no",
         "| pendingDeposit:", pendingDeposit and "YES" or "no")
@@ -256,7 +256,7 @@ function Tracker:OnInitialize()
     pendingDeposit  = nil
     itemNameCache   = {}
 
-    local GL = ns.GoldLedger
+    local GL = ns.Copperwise
     if not GL then return end
 
     -- Subscribe to core Tracker's gold change callback (amender pattern)

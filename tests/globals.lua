@@ -1,18 +1,18 @@
--- Fails if GoldLedger's own code assigns a global it doesn't own.
+-- Fails if Copperwise's own code assigns a global it doesn't own.
 -- Assigning a Blizzard global (even to its current value) taints it, and any
 -- secure code that reads it afterwards runs tainted: e.g. `SlashCmdList =
--- SlashCmdList or {}` made every slash command blame GoldLedger for
+-- SlashCmdList or {}` made every slash command blame Copperwise for
 -- ADDON_ACTION_FORBIDDEN. Uses LuaJIT bytecode listings, so it sees real
 -- global stores (GSET) rather than guessing from source text.
 -- Usage: luajit tests/globals.lua [addon directory]
 
 local dir = ... or "."
 
--- Globals GoldLedger may set: its SavedVariables, its own names and slash aliases
+-- Globals Copperwise may set: its SavedVariables, its own names and slash aliases
 local ALLOWED = {
-    "^GoldLedgerDB$",
-    "^GoldLedger$",
-    "^SLASH_GOLDLEDGER%w*%d$",
+    "^CopperwiseDB$",
+    "^Copperwise$",
+    "^SLASH_COPPERWISE%w*%d$",
 }
 
 local function allowed(name)
@@ -24,7 +24,7 @@ end
 
 -- Lua files the client loads, from the .toc (embedded libraries excluded)
 local files = {}
-for line in io.lines(dir .. "/GoldLedger.toc") do
+for line in io.lines(dir .. "/Copperwise.toc") do
     line = line:gsub("\r$", "")
     if line ~= "" and not line:match("^#") and not line:match("^Libs[\\/]") and line:match("%.lua$") then
         files[#files + 1] = (line:gsub("\\", "/"))

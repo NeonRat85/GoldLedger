@@ -1,5 +1,5 @@
 --[[
-    GoldLedger / History: Frame.lua
+    Copperwise / History: Frame.lua
     Transaction history popup with pagination + filters (source, type, minAmount).
     Uses UI public API — avoids direct WoW calls where possible.
 ]]
@@ -13,7 +13,7 @@ ns.History.Frame = Frame
 -------------------------------------------------------------------------------
 -- Helpers
 -------------------------------------------------------------------------------
-local function UI() return ns.GoldLedger and ns.GoldLedger:GetModule("UI") end
+local function UI() return ns.Copperwise and ns.Copperwise:GetModule("UI") end
 local function L()  return ns.History.L end
 local function H()  return ns.UI_Helpers end
 
@@ -58,7 +58,7 @@ local function CreateEntryRow(parent, index)
 
     function row:SetEntry(entry)
         local helpers = H()
-        local GL = ns.GoldLedger
+        local GL = ns.Copperwise
         local coreL = GL and ns.L
         self.dateText:SetText(date("%Y-%m-%d", entry.timestamp))
         self.timeText:SetText(date((coreL and coreL["TIME_FORMAT"]) or "%H:%M", entry.timestamp))
@@ -90,7 +90,7 @@ function Frame:Create()
     if not ui then return end
 
     local f = ui:CreatePopup({
-        name  = "GoldLedgerHistoryFrame",
+        name  = "CopperwiseHistoryFrame",
         title = l["HISTORY_TITLE"],
         width = 600, height = 450,
     })
@@ -257,7 +257,7 @@ function Frame:Update()
     local helpers = H()
     local TC = helpers and helpers.TC or function() return 1,1,1,1 end
 
-    local Data = ns.GoldLedger and ns.GoldLedger:GetModule("Data")
+    local Data = ns.Copperwise and ns.Copperwise:GetModule("Data")
     if not Data or not Data.GetFilteredEntries then return end
 
     local result = Data:GetFilteredEntries({

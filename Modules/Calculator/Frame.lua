@@ -1,5 +1,5 @@
 --[[
-    GoldLedger / Calculator: Frame.lua
+    Copperwise / Calculator: Frame.lua
     Built-in calculator popup.
     Uses ONLY UI public API — no direct WoW API calls.
 ]]
@@ -13,7 +13,7 @@ ns.Calculator.Frame = Frame
 -------------------------------------------------------------------------------
 -- Helpers
 -------------------------------------------------------------------------------
-local function UI() return ns.GoldLedger and ns.GoldLedger:GetModule("UI") end
+local function UI() return ns.Copperwise and ns.Copperwise:GetModule("UI") end
 local function L()  return ns.Calculator.L end
 local function H()  return ns.UI_Helpers end
 
@@ -30,7 +30,7 @@ function Frame:Create()
 
     -- Standardized popup: title bar, close button, drag, backdrop
     local f = ui:CreatePopup({
-        name   = "GoldLedgerCalcFrame",
+        name   = "CopperwiseCalcFrame",
         title  = l["CALC_TITLE"],
         width  = 220,
         height = 290,
