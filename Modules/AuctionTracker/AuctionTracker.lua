@@ -71,7 +71,9 @@ end
 -------------------------------------------------------------------------------
 _G.SLASH_GOLDLEDGERAUCTION1 = "/gla"
 
-SlashCmdList = SlashCmdList or {}
+-- Only add a key: never assign the SlashCmdList global itself (even to itself).
+-- That taints the variable, and every slash command then runs tainted, so
+-- protected ones like /pvp fail with ADDON_ACTION_FORBIDDEN blamed on GoldLedger.
 SlashCmdList["GOLDLEDGERAUCTION"] = function(msg)
     local cmd = strtrim(msg or ""):lower()
 

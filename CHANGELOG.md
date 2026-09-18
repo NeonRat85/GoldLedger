@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Protected slash commands blocked and blamed on GoldLedger.** The Auction
+  module ran `SlashCmdList = SlashCmdList or {}`, which reassigns Blizzard's
+  global to itself and taints it. Every slash command then ran tainted, so
+  protected ones such as `/pvp` failed with `ADDON_ACTION_FORBIDDEN` naming
+  GoldLedger. The module now only adds its own key. Present since the
+  original 2.4.4.
+
+### Added
+
+- `tests/globals.lua`, run in CI, fails if GoldLedger's code assigns any
+  global it doesn't own.
+
 ### Added
 
 - **Item names for vendor sales.** Vendor income is matched to the merchant's

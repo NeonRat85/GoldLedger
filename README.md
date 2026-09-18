@@ -58,6 +58,7 @@ Requires [LuaJIT](https://luajit.org/), which implements Lua 5.1 like the WoW cl
 ```bash
 luajit tests/harness.lua .
 luajit tests/minimap.lua .
+luajit tests/globals.lua .
 ```
 
 `tests/harness.lua` loads the addon's real core files against a minimal WoW API stub and drives gold changes through `PLAYER_MONEY`. `tests/minimap.lua` loads the embedded libraries and the minimap module, and checks registration, the tooltip, visibility and settings migration. CI runs both, along with a syntax check of every Lua file and a check that every file listed in `GoldLedger.toc` exists.

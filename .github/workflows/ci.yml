@@ -34,6 +34,10 @@ jobs:
       - name: Run minimap test
         run: luajit tests/minimap.lua .
 
+      # Assigning a Blizzard global taints it and breaks secure code that reads it
+      - name: Check global assignments
+        run: luajit tests/globals.lua .
+
       # The .toc drives what the client loads, so a missing file is fatal.
       - name: Verify .toc references resolve
         run: |
