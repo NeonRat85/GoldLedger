@@ -1,0 +1,45 @@
+name: Release
+
+# Pushing a version tag (e.g. v1.0.1) tests the addon, then packages it with
+# BigWigsMods/packager and uploads it to CurseForge (project ID from the .toc)
+# and as a GitHub release. Bump "## Version" in Copperwise.toc and CHANGELOG.md
+# before tagging.
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # create the GitHub release
+    env:
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # packager builds the changelog from history
+
+      - name: Install LuaJIT
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y luajit
+
+      - name: Test
+        run: |
+          luajit tests/harness.lua .
+          luajit tests/minimap.lua .
+          luajit tests/globals.lua .
+
+      # The tag must match the version players see in game
+      - name: Check tag matches .toc version
+        run: |
+          toc=$(sed -n 's/^## Version: *//p' Copperwise.toc | tr -d '\r')
+          if [ "v$toc" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match Copperwise.toc version $toc"
+            exit 1
+          fi
+
+      - uses: BigWigsMods/packager@v2

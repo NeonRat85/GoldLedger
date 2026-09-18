@@ -63,6 +63,13 @@ luajit tests/globals.lua .
 
 `tests/harness.lua` loads the addon's core files against a minimal WoW API stub and drives gold changes through `PLAYER_MONEY`: bank transfers, vendor sales, the GoldLedger import and more. `tests/minimap.lua` loads the embedded libraries and the minimap module. `tests/globals.lua` fails if the addon assigns a global it doesn't own, which would taint Blizzard code. CI runs all three, plus a syntax check of every Lua file and a check that every file in `Copperwise.toc` exists.
 
+## Releasing
+
+1. Bump `## Version` in `Copperwise.toc` and add a section to `CHANGELOG.md`.
+2. Commit, then tag and push: `git tag -a v1.0.1 -m "Copperwise 1.0.1"` and `git push origin main v1.0.1`.
+
+The Release workflow runs the tests, checks the tag matches the `.toc` version, and uploads the package to CurseForge and GitHub Releases. It needs a `CF_API_KEY` repository secret containing a CurseForge API token.
+
 ## Credits
 
 Copperwise is based on [GoldLedger](https://www.curseforge.com/wow/addons/goldledger) by **tum24**, released under the MIT License. The first commit in this repository is the unmodified GoldLedger 2.4.4; see [CHANGELOG.md](CHANGELOG.md) for everything since.
