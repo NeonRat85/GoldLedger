@@ -6,6 +6,21 @@ were released as GoldLedger (by tum24, then this fork) and are kept for history.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+- **Russian translation and the language picker.** Copperwise is English only.
+  The Settings window no longer has a Language section, and any saved language
+  choice is cleared. Russian developer comments inherited from GoldLedger are
+  translated to English (no code changes).
+
+### Changed
+
+- Auction House sale mail is recognised by Blizzard's own localised subject
+  (`AUCTION_SOLD_MAIL_SUBJECT`) instead of hard-coded English and Russian words,
+  so it works in every client language.
+
 ## [1.0.0]
 
 First release as **Copperwise**, based on GoldLedger 2.4.4 by tum24 (MIT).

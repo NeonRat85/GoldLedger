@@ -2,11 +2,11 @@
     Copperwise: Data.lua
     Pattern: Facade
 
-    Единый интерфейс для работы с данными:
-    - Инициализация SavedVariables с defaults
-    - CRUD для записей транзакций
-    - Агрегация: дневные и месячные итоги
-    - Авто-очистка старых записей (>90 дней)
+    Single interface for all data access:
+    - SavedVariables initialisation with defaults
+    - CRUD for transaction entries
+    - Aggregation: daily and monthly totals
+    - Automatic cleanup of old entries
 ]]
 
 local ADDON_NAME, ns = ...
@@ -19,8 +19,8 @@ Copperwise:RegisterModule("Data", Data)
 -------------------------------------------------------------------------------
 -- Constants
 -------------------------------------------------------------------------------
-local MAX_ENTRIES = 5000            -- Макс. записей на персонажа
-local CLEANUP_AGE_DAYS = 365       -- Удалять записи старше N дней
+local MAX_ENTRIES = 5000            -- Max entries per character
+local CLEANUP_AGE_DAYS = 365       -- Delete entries older than N days
 local SECONDS_PER_DAY = 86400
 
 -------------------------------------------------------------------------------
@@ -31,7 +31,6 @@ local DB_DEFAULTS = {
     settings = {
         showMinimap = true,  -- button position/visibility: settings.minimap (LibDBIcon)
         theme = "dashboard_cards",
-        language = nil,  -- nil = auto (game locale)
     },
     modules = {},  -- per-feature namespaced data
 }
@@ -40,7 +39,7 @@ local DB_DEFAULTS = {
 -- Helpers
 -------------------------------------------------------------------------------
 
---- Возвращает ключ текущего персонажа: "Name-Realm"
+--- Returns the current character's key: "Name-Realm"
 --- @return string
 function Data:GetCharKey()
     local name = UnitName("player")
@@ -48,27 +47,27 @@ function Data:GetCharKey()
     return name .. "-" .. realm
 end
 
---- Текущая дата в формате "YYYY-MM-DD"
+--- Today's date as "YYYY-MM-DD"
 --- @return string
 function Data:GetDateKey()
     return date("%Y-%m-%d")
 end
 
---- Дата вчерашнего дня в формате "YYYY-MM-DD"
---- (корректно перепрыгивает границы месяца/года, потому что time()-86400
---- падает в предыдущие сутки в любой временной зоне)
+--- Yesterday's date as "YYYY-MM-DD"
+--- (crosses month/year boundaries correctly, because time()-86400
+--- lands in the previous day in any time zone)
 --- @return string
 function Data:GetYesterdayDateKey()
     return date("%Y-%m-%d", time() - SECONDS_PER_DAY)
 end
 
---- Текущий месяц в формате "YYYY-MM"
+--- Current month as "YYYY-MM"
 --- @return string
 function Data:GetMonthKey()
     return date("%Y-%m")
 end
 
---- Deep copy defaults в target (не перезаписывает существующие)
+--- Deep-copies defaults into target (never overwrites existing values)
 --- @param target table
 --- @param defaults table
 local function ApplyDefaults(target, defaults)
@@ -85,28 +84,24 @@ local function ApplyDefaults(target, defaults)
 end
 
 -------------------------------------------------------------------------------
--- Lifecycle (вызывается из Core)
+-- Lifecycle (called from Core)
 -------------------------------------------------------------------------------
 
---- Инициализация SavedVariables
+--- SavedVariables initialisation
 function Data:OnInitialize()
-    -- Создаём или мёржим с defaults
+    -- Create, or merge with defaults
     if not CopperwiseDB then
         CopperwiseDB = {}
     end
     ApplyDefaults(CopperwiseDB, DB_DEFAULTS)
     self:ImportFromGoldLedger()
 
-    -- Восстановить сохранённый язык
-    local savedLang = CopperwiseDB.settings.language
-    if savedLang and savedLang ~= "auto" then
-        L:SetLocale(savedLang)
-    end
+    CopperwiseDB.settings.language = nil  -- language picker removed (English only)
 
-    -- Гарантируем структуру для текущего персонажа
+    -- Make sure the current character has a data table
     self:EnsureCharacterData()
 
-    -- Очистка старых записей
+    -- Remove old entries
     self:CleanupOldEntries()
 end
 
@@ -145,7 +140,7 @@ function Data:ImportFromGoldLedger()
     end)
 end
 
---- Гарантирует наличие данных текущего персонажа
+--- Makes sure the current character has a data table
 function Data:EnsureCharacterData()
     local key = self:GetCharKey()
     if not CopperwiseDB.characters[key] then
@@ -163,10 +158,10 @@ end
 -- Feature modules get their own section in CopperwiseDB.modules[name]
 -------------------------------------------------------------------------------
 
---- Регистрирует namespace для feature-модуля с defaults
---- @param name string Имя namespace (e.g. "auction")
---- @param defaults table Структура по умолчанию
---- @return table Ссылка на namespace data в CopperwiseDB.modules[name]
+--- Registers a feature module namespace with defaults
+--- @param name string Namespace name (e.g. "auction")
+--- @param defaults table Default structure
+--- @return table Reference to the namespace data in CopperwiseDB.modules[name]
 function Data:RegisterNamespace(name, defaults)
     if not CopperwiseDB.modules then
         CopperwiseDB.modules = {}
@@ -174,7 +169,7 @@ function Data:RegisterNamespace(name, defaults)
     if not CopperwiseDB.modules[name] then
         CopperwiseDB.modules[name] = {}
     end
-    -- Merge defaults (не перезаписывает существующие)
+    -- Merge defaults (never overwrites existing values)
     if defaults then
         local function applyDefaults(target, defs)
             for k, v in pairs(defs) do
@@ -191,8 +186,8 @@ function Data:RegisterNamespace(name, defaults)
     return CopperwiseDB.modules[name]
 end
 
---- Возвращает namespace data для feature-модуля
---- @param name string Имя namespace
+--- Returns a feature module's namespace data
+--- @param name string Namespace name
 --- @return table|nil
 function Data:GetNamespace(name)
     return CopperwiseDB and CopperwiseDB.modules and CopperwiseDB.modules[name]
@@ -202,11 +197,11 @@ end
 -- Facade API: CRUD
 -------------------------------------------------------------------------------
 
---- Добавляет запись о транзакции
---- @param amount number Сумма в copper (положительная = доход, отрицательная = расход)
---- @param source string|nil Источник: "vendor", "ah", "mail", "quest", "loot", "trade", "unknown"
---- @param meta table|nil Опциональные метаданные { itemName, ahType, quantity, unitPrice, grossAmount, cutAmount }
----                       Ядро хранит их прозрачно, не интерпретирует. Используется модулями (AuctionTracker).
+--- Adds a transaction entry
+--- @param amount number Amount in copper (positive = income, negative = expense)
+--- @param source string|nil Source: "vendor", "ah", "mail", "quest", "loot", "trade", "unknown"
+--- @param meta table|nil Optional metadata { itemName, ahType, quantity, unitPrice, grossAmount, cutAmount }
+---                       Stored as-is, never interpreted by the core. Used by modules (AuctionTracker).
 --- @return table|nil The stored entry (callers may annotate it, e.g. vendor sale item names)
 function Data:AddEntry(amount, source, meta)
     if amount == 0 then return end
@@ -218,7 +213,7 @@ function Data:AddEntry(amount, source, meta)
     local entryType = amount > 0 and "income" or "expense"
     local absAmount = math.abs(amount)
 
-    -- 1. Добавить запись в лог
+    -- 1. Append to the log
     local entry = {
         timestamp = now,
         amount = absAmount,
@@ -236,13 +231,13 @@ function Data:AddEntry(amount, source, meta)
     table.insert(charData.entries, entry)
     self:TrimEntries(charData)
 
-    -- 2. Обновить дневной итог
+    -- 2. Update the daily total
     if not charData.daily[dateKey] then
         charData.daily[dateKey] = { income = 0, expense = 0 }
     end
     charData.daily[dateKey][entryType] = charData.daily[dateKey][entryType] + absAmount
 
-    -- 3. Обновить месячный итог
+    -- 3. Update the monthly total
     if not charData.monthly[monthKey] then
         charData.monthly[monthKey] = { income = 0, expense = 0 }
     end
@@ -251,7 +246,7 @@ function Data:AddEntry(amount, source, meta)
     return entry
 end
 
---- Ограничение размера: удаляем самые старые
+--- Size limit: drop the oldest entries
 function Data:TrimEntries(charData)
     while #charData.entries > MAX_ENTRIES do
         table.remove(charData.entries, 1)
@@ -296,8 +291,8 @@ function Data:GetWarbandBankMoney()
     return wb and wb.amount or 0
 end
 
---- Возвращает итоги за день
---- @param dateKey string|nil Дата "YYYY-MM-DD", nil = сегодня
+--- Returns the totals for a day
+--- @param dateKey string|nil Date "YYYY-MM-DD", nil = today
 --- @return table {income=number, expense=number}
 function Data:GetDailySummary(dateKey)
     dateKey = dateKey or self:GetDateKey()
@@ -305,8 +300,8 @@ function Data:GetDailySummary(dateKey)
     return charData.daily[dateKey] or { income = 0, expense = 0 }
 end
 
---- Возвращает итоги за месяц
---- @param monthKey string|nil Месяц "YYYY-MM", nil = текущий
+--- Returns the totals for a month
+--- @param monthKey string|nil Month "YYYY-MM", nil = current
 --- @return table {income=number, expense=number}
 function Data:GetMonthlySummary(monthKey)
     monthKey = monthKey or self:GetMonthKey()
@@ -314,13 +309,13 @@ function Data:GetMonthlySummary(monthKey)
     return charData.monthly[monthKey] or { income = 0, expense = 0 }
 end
 
---- Возвращает данные по дням текущего месяца для графика (legacy)
+--- Returns per-day data for the current month's chart (legacy)
 --- @return table[] { {day=1, income=N, expense=N}, ... }, number maxValue
 function Data:GetMonthlyChartData()
     return self:GetChartData("30d")
 end
 
---- Возвращает данные для графика за указанный период
+--- Returns chart data for a period
 --- @param period string "7d"|"30d"|"all"
 --- @return table[] { {label=string, dateKey=string, income=N, expense=N}, ... }, number maxValue, number count
 function Data:GetChartData(period)
@@ -329,7 +324,7 @@ function Data:GetChartData(period)
     local maxVal = 1
 
     if period == "7d" then
-        -- Последние 7 дней
+        -- Last 7 days
         local now = time()
         for i = 6, 0, -1 do
             local t = now - i * SECONDS_PER_DAY
@@ -347,7 +342,7 @@ function Data:GetChartData(period)
         return result, maxVal, 7
 
     elseif period == "all" then
-        -- Все дни с данными, сортированные по дате
+        -- Every day with data, sorted by date
         local dateKeys = {}
         for dateKey in pairs(charData.daily) do
             table.insert(dateKeys, dateKey)
@@ -369,7 +364,7 @@ function Data:GetChartData(period)
         if count == 0 then count = 1 end
         return result, maxVal, count
 
-    else -- "30d" default: последние 30 дней
+    else -- "30d" default: last 30 days
         local now = time()
         for i = 29, 0, -1 do
             local t = now - i * SECONDS_PER_DAY
@@ -388,9 +383,9 @@ function Data:GetChartData(period)
     end
 end
 
---- Возвращает последние N записей (новые первыми)
---- @param count number Количество записей
---- @return table[] Массив записей
+--- Returns the last N entries, newest first
+--- @param count number Number of entries
+--- @return table[] Array of entries
 function Data:GetRecentEntries(count)
     count = count or 50
     local charData = self:EnsureCharacterData()
@@ -405,7 +400,7 @@ function Data:GetRecentEntries(count)
     return result
 end
 
---- Возвращает настройки аддона
+--- Returns the addon settings
 --- @return table
 function Data:GetSettings()
     return CopperwiseDB.settings
@@ -415,7 +410,7 @@ end
 -- Reset & Cleanup
 -------------------------------------------------------------------------------
 
---- Сбрасывает данные текущего персонажа
+--- Resets the current character's data
 function Data:ResetCharacterData()
     local key = self:GetCharKey()
     CopperwiseDB.characters[key] = nil
@@ -426,24 +421,24 @@ end
 -- Goal API
 -------------------------------------------------------------------------------
 
---- Устанавливает цель накопления (в copper)
---- @param amount number Сумма в copper
+--- Sets the savings goal (in copper)
+--- @param amount number Amount in copper
 function Data:SetGoal(amount)
     CopperwiseDB.settings.goalAmount = amount
 end
 
---- Возвращает текущую цель (в copper), 0 если нет
+--- Returns the current goal in copper, 0 if none
 --- @return number
 function Data:GetGoal()
     return CopperwiseDB.settings.goalAmount or 0
 end
 
---- Сбрасывает цель
+--- Clears the goal
 function Data:ClearGoal()
     CopperwiseDB.settings.goalAmount = nil
 end
 
---- Возвращает прогресс к цели
+--- Returns progress towards the goal
 --- @return table|nil {goal, current, progress(0-1), remaining, estDays}
 function Data:GetGoalProgress()
     local goal = self:GetGoal()
@@ -454,7 +449,7 @@ function Data:GetGoalProgress()
     local progress = currentGold / goal
     local remaining = goal - currentGold
 
-    -- Оценка дней: средний ежедневный чистый доход
+    -- Days estimate: average daily net income
     local charData = self:EnsureCharacterData()
     local totalNet = 0
     local days = 0
@@ -479,7 +474,7 @@ end
 -- Multi-character API
 -------------------------------------------------------------------------------
 
---- Возвращает сводку по всем персонажам за указанный период
+--- Returns a summary for every character over a period
 --- @param period string|nil "day"|"week"|"month" (default: "month")
 --- @return table[] { {name, income, expense, net}, ... }
 function Data:GetAllCharactersSummary(period)
@@ -536,17 +531,17 @@ end
 -- Source Breakdown API
 -------------------------------------------------------------------------------
 
---- Все источники в порядке отображения
+--- All sources, in display order
 Data.ALL_SOURCES = {"vendor", "repair", "ah", "mail", "quest", "loot", "trade", "bank", "guildbank", "unknown"}
 
---- Возвращает разбивку по источникам за период
+--- Returns the per-source breakdown for a period
 --- @param period string "today"|"week"|"month"|"all"
 --- @return table sourceTotals { [source] = {income=N, expense=N} }
 --- @return table grandTotals {income=N, expense=N}
 function Data:GetSourceBreakdown(period)
     local charData = self:EnsureCharacterData()
 
-    -- Вычисляем cutoff
+    -- Work out the cutoff
     local cutoff = 0
     if period == "today" then
         local d = date("*t")
@@ -557,7 +552,7 @@ function Data:GetSourceBreakdown(period)
     elseif period == "month" then
         cutoff = time() - 30 * SECONDS_PER_DAY
     end
-    -- "all" → cutoff = 0, все записи
+    -- "all" → cutoff = 0, every entry
 
     local sourceTotals = {}
     for _, src in ipairs(self.ALL_SOURCES) do
@@ -585,7 +580,7 @@ end
 -- Filtered Entries API (pagination + search)
 -------------------------------------------------------------------------------
 
---- Возвращает отфильтрованные записи с пагинацией
+--- Returns filtered entries, paginated
 --- @param options table { page=1, perPage=50, source="all", entryType="all", minAmount=0 }
 --- @return table { entries={...}, total=N, page=N, totalPages=N }
 function Data:GetFilteredEntries(options)
@@ -598,7 +593,7 @@ function Data:GetFilteredEntries(options)
 
     local charData = self:EnsureCharacterData()
 
-    -- Фильтруем все записи (reverse order — newest first)
+    -- Filter every entry (reverse order, newest first)
     local filtered = {}
     for i = #charData.entries, 1, -1 do
         local entry = charData.entries[i]
@@ -622,7 +617,7 @@ function Data:GetFilteredEntries(options)
     local total = #filtered
     local totalPages = perPage > 0 and math.ceil(total / perPage) or 0
 
-    -- Извлекаем нужную страницу
+    -- Take the requested page
     local startIdx = (page - 1) * perPage + 1
     local endIdx = math.min(page * perPage, total)
     local entries = {}
@@ -645,7 +640,7 @@ end
 -- Export API
 -------------------------------------------------------------------------------
 
---- Возвращает CSV-строку всех записей текущего персонажа
+--- Returns every entry for the current character as CSV
 --- @return string CSV data
 function Data:GetExportCSV()
     local charData = self:EnsureCharacterData()
@@ -667,7 +662,7 @@ function Data:GetExportCSV()
     return table.concat(lines, "\n")
 end
 
---- Удаляет записи старше CLEANUP_AGE_DAYS
+--- Removes entries older than CLEANUP_AGE_DAYS
 function Data:CleanupOldEntries()
     local charData = self:EnsureCharacterData()
     local cutoff = time() - (CLEANUP_AGE_DAYS * SECONDS_PER_DAY)
@@ -682,7 +677,7 @@ function Data:CleanupOldEntries()
 
     charData.entries = cleaned
 
-    -- Очистка старых дневных итогов
+    -- Remove old daily totals
     local dateCutoff = date("%Y-%m-%d", cutoff)
     for dateKey in pairs(charData.daily) do
         if dateKey < dateCutoff then
@@ -690,7 +685,7 @@ function Data:CleanupOldEntries()
         end
     end
 
-    -- Очистка старых месячных итогов (>6 месяцев)
+    -- Remove old monthly totals
     local monthCutoff = date("%Y-%m", cutoff)
     for monthKey in pairs(charData.monthly) do
         if monthKey < monthCutoff then

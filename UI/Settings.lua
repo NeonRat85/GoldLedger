@@ -28,7 +28,7 @@ local function CreateSettingsFrame()
     local f = ui:CreatePopup({
         name  = "CopperwiseSettingsFrame",
         title = L and L["HEADER_SETTINGS"] or "Settings",
-        width = 320, height = 300,
+        width = 320, height = 124,
     })
     f:ClearAllPoints()
     f:SetPoint("CENTER", UIParent, "CENTER", 0, 100)
@@ -52,44 +52,6 @@ local function CreateSettingsFrame()
     minimapCheck:SetPoint("LEFT", minimapLabel, "RIGHT", 6, 0)
     settingsElements.minimapCheck = minimapCheck
     f.minimapCheck = minimapCheck  -- expose for tests and external code
-
-    y = y - 36
-
-    -- Language label
-    local langLabel = ui:CreateLabel(f, { color = "LABEL" })
-    langLabel:SetPoint("TOPLEFT", f, "TOPLEFT", 14, y)
-    settingsElements.langLabel = langLabel
-
-    y = y - 20
-    settingsElements.langBtns = {}
-    local langIds = { "auto", "enUS", "ruRU" }
-    for i = 1, 3 do
-        local btn = ui:CreateButton(f, {
-            width = 90, height = 22,
-            onClick = function()
-                if _G.CopperwiseDB and _G.CopperwiseDB.settings then
-                    _G.CopperwiseDB.settings.language = langIds[i]
-                end
-                local localeArg = langIds[i] == "auto" and nil or langIds[i]
-                if L and L.SetLocale then L:SetLocale(localeArg) end
-                C_Timer.After(0, function()
-                    -- Notify all listeners (MainFrame + each feature) that the
-                    -- locale changed; they tear themselves down so the next
-                    -- Toggle re-creates with fresh strings.
-                    if Copperwise and Copperwise.Events then
-                        Copperwise.Events:Emit("LANGUAGE_CHANGED", langIds[i])
-                    end
-                    RefreshSettings()
-                    local h = Helpers()
-                    if h and h.SnapToMain then h.SnapToMain(settingsFrame) end
-                    settingsFrame:Show()
-                end)
-            end,
-        })
-        btn:SetPoint("TOPLEFT", f, "TOPLEFT", 14 + (i - 1) * 96, y)
-        btn.langId = langIds[i]
-        settingsElements.langBtns[i] = btn
-    end
 
     y = y - 36
 
@@ -129,21 +91,6 @@ RefreshSettings = function()
         _G.CopperwiseDB and _G.CopperwiseDB.settings
             and _G.CopperwiseDB.settings.showMinimap ~= false
     )
-
-    settingsElements.langLabel:SetText(L["SETTINGS_LANGUAGE"])
-
-    local currentLang = (_G.CopperwiseDB and _G.CopperwiseDB.settings and _G.CopperwiseDB.settings.language) or "auto"
-    local langLabels = { L["SETTINGS_LANG_AUTO"], "English", "Русский" }
-    for i, btn in ipairs(settingsElements.langBtns) do
-        btn.text:SetText(langLabels[i])
-        if btn.langId == currentLang then
-            if btn.LockHighlight then btn:LockHighlight() end
-            if btn.text and btn.text.SetTextColor then btn.text:SetTextColor(1, 0.82, 0) end
-        else
-            if btn.UnlockHighlight then btn:UnlockHighlight() end
-            if btn.text and btn.text.SetTextColor then btn.text:SetTextColor(1, 1, 1) end
-        end
-    end
 
     settingsElements.resetBtn:SetText(L["SETTINGS_RESET_SESSION"])
     if settingsElements.resetBtn.text and settingsElements.resetBtn.text.SetTextColor then

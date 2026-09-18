@@ -33,10 +33,16 @@ local itemNameCache   = {}   -- itemID/auctionID → name (best-effort)
 -------------------------------------------------------------------------------
 -- Helpers
 -------------------------------------------------------------------------------
+-- AH sale mail subject prefix in the client's own language, from Blizzard's
+-- AUCTION_SOLD_MAIL_SUBJECT ("Auction successful: %s"); English if unavailable
+local AH_SOLD_SUBJECT_PREFIX = type(_G.AUCTION_SOLD_MAIL_SUBJECT) == "string"
+    and _G.AUCTION_SOLD_MAIL_SUBJECT:match("^(.-)%%s")
+    or "Auction successful"
+
 local function isAHSender(sender, subject)
     if _G.AUCTION_HOUSE_MAIL_SELLER and sender == _G.AUCTION_HOUSE_MAIL_SELLER then return true end
     if sender and sender:find("Auction House") then return true end
-    if subject and (subject:find("Auction successful") or subject:find("Аукцион") or subject:find("успеш")) then return true end
+    if subject and subject:find(AH_SOLD_SUBJECT_PREFIX, 1, true) then return true end
     return false
 end
 

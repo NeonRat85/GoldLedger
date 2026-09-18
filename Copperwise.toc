@@ -1,6 +1,6 @@
 ## Interface: 120100
 ## Title: Copperwise
-## Notes: Tracks every copper in and out: vendors, Auction House, mail, loot, quests, repairs and warband bank transfers | Учёт доходов и расходов золота
+## Notes: Tracks every copper in and out: vendors, Auction House, mail, loot, quests, repairs and warband bank transfers
 ## Author: NeonRat85
 ## Version: 1.0.0
 ## SavedVariables: CopperwiseDB

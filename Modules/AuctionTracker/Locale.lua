@@ -52,61 +52,7 @@ local enUS = {
     AUCTION_NEXT            = "Next >",
 }
 
-local ruRU = {
-    AUCTION_BUTTON          = "Аукцион",
-    AUCTION_TITLE           = "Copperwise — История аукциона",
-
-    AUCTION_PERIOD          = "Период:",
-    AUCTION_TYPE            = "Тип:",
-    AUCTION_SEARCH          = "Поиск:",
-
-    AUCTION_PERIOD_TODAY    = "Сегодня",
-    AUCTION_PERIOD_WEEK     = "Неделя",
-    AUCTION_PERIOD_MONTH    = "Месяц",
-    AUCTION_PERIOD_ALL      = "Всё",
-
-    AUCTION_TYPE_ALL        = "Все",
-    AUCTION_TYPE_SALE       = "Продажа",
-    AUCTION_TYPE_PURCHASE   = "Покупка",
-    AUCTION_TYPE_CUT        = "AH Cut",
-    AUCTION_TYPE_DEPOSIT    = "Депозит",
-
-    AUCTION_COL_TIME        = "Время",
-    AUCTION_COL_TYPE        = "Тип",
-    AUCTION_COL_ITEM        = "Предмет",
-    AUCTION_COL_QTY         = "Кол",
-    AUCTION_COL_PRICE       = "Цена",
-    AUCTION_COL_TOTAL       = "Итог",
-
-    AUCTION_STATUS_RECORDS  = "Записей: %d",
-    AUCTION_STATUS_INCOME   = "Доход: %s",
-    AUCTION_STATUS_EXPENSE  = "Расход: %s",
-    AUCTION_STATUS_NET      = "Net: %s",
-
-    AUCTION_NO_RESULTS      = "Нет операций по фильтру.",
-    AUCTION_UNKNOWN_ITEM    = "?",
-    AUCTION_PAGE            = "Стр. %d/%d",
-    AUCTION_SHOWING         = "Показано %d-%d из %d",
-    AUCTION_PREV            = "< Назад",
-    AUCTION_NEXT            = "Далее >",
-}
-
-local L = {}
-local function getLocale()
-    -- Respect core language setting (ns.L:GetLocale()), not system GetLocale()
-    if ns.L and ns.L.GetLocale then
-        return ns.L:GetLocale()
-    end
-    return GetLocale and GetLocale() == "ruRU" and "ruRU" or "enUS"
-end
-
-setmetatable(L, {
-    __index = function(_, key)
-        if getLocale() == "ruRU" then
-            return ruRU[key] or enUS[key] or key
-        end
-        return enUS[key] or key
-    end
-})
+-- English only; unknown keys fall back to the key itself
+local L = setmetatable({}, { __index = function(_, key) return enUS[key] or key end })
 
 ns.AuctionTracker.L = L

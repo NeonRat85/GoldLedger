@@ -18,7 +18,6 @@ A World of Warcraft addon that tracks every copper in and out: vendors, the Auct
 - **Savings goal** with a progress bar and ETA
 - **Multi-character overview**, built-in calculator and CSV export
 - **Minimap button** (LibDBIcon) with today's and this month's totals
-- **English and Russian**, switchable in game
 - **Modular**: delete any `Modules/<Name>/` folder to remove that feature
 
 ## Installation

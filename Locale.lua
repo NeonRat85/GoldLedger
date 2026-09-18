@@ -2,15 +2,15 @@
     Copperwise: Locale.lua
     Pattern: Registry with __index fallback
 
-    Локализация загружается первой. Английский — базовый язык (fallback).
-    Русские строки перекрывают английские через GetLocale().
-    Доступ: Copperwise.L["KEY"]
+    Loaded first. All UI strings live here (English).
+    Unknown keys fall back to the key itself.
+    Access: ns.L["KEY"]
 ]]
 
 local ADDON_NAME, ns = ...
 
 -------------------------------------------------------------------------------
--- Registry: базовые строки (English fallback)
+-- Registry: UI strings
 -------------------------------------------------------------------------------
 local defaultStrings = {
     -- General
@@ -105,149 +105,19 @@ local defaultStrings = {
     ["SETTINGS_BUTTON"]      = "Settings",
     ["HEADER_SETTINGS"]      = "Settings",
     ["SETTINGS_MINIMAP"]     = "Show minimap button",
-    ["SETTINGS_LANGUAGE"]    = "Language",
-    ["SETTINGS_LANG_AUTO"]   = "Auto (game language)",
-    ["SETTINGS_LANG_EN"]     = "English",
-    ["SETTINGS_LANG_RU"]     = "Русский",
     ["SETTINGS_RESET_SESSION"] = "Reset session",
 
     -- History
 }
 
 -------------------------------------------------------------------------------
--- Registry: русские строки (ruRU override)
+-- Lookup: unknown keys fall back to the key itself
 -------------------------------------------------------------------------------
-local ruStrings = {
-    -- General
-    ["ADDON_LOADED"]        = "|cffb87333Copperwise|r загружен. Введите |cfffff569/cw|r для открытия.",
-    ["IMPORTED_GOLDLEDGER"] = "импортировано %d записей для %d персонажей из GoldLedger. GoldLedger можно отключить.",
-    ["SLASH_HELP"]          = "Использование: /cw — окно, /cw reset — сброс данных",
-    ["RESET_CONFIRM"]       = "Все данные персонажа сброшены.",
-
-    -- UI Headers
-    ["HEADER_TODAY"]        = "Сегодня",
-    ["HEADER_YESTERDAY"]    = "Вчера",
-    ["HEADER_MONTH"]        = "Этот месяц",
-    ["HEADER_RECENT"]       = "Последние транзакции",
-    ["HEADER_SESSION"]      = "Сессия",
-    ["HEADER_INCOME"]       = "Доход",
-    ["HEADER_EXPENSE"]      = "Расход",
-    ["HEADER_BALANCE"]      = "Баланс",
-    ["HEADER_NET"]          = "Итого",
-    ["HEADER_ON_HAND"]      = "На руках",
-
-    -- Tooltip
-    ["TOOLTIP_HINT"]        = "|cffffffffКлик|r — открыть окно",
-    ["TOOLTIP_TODAY"]       = "Сегодня",
-    ["TOOLTIP_MONTH"]       = "Этот месяц",
-    ["TOOLTIP_TOTAL"]       = "Итого",
-
-    -- Gold formatting
-    ["GOLD_ABBR"]           = "з",
-    ["SILVER_ABBR"]         = "с",
-    ["COPPER_ABBR"]         = "м",
-
-    -- Time
-    ["TIME_FORMAT"]         = "%H:%M",
-    ["DATE_FORMAT"]         = "%d.%m.%Y",
-    ["MONTH_FORMAT"]        = "%Y-%m",
-
-    -- Messages
-    ["NO_DATA"]             = "Транзакций пока нет.",
-    ["INCOME_LOGGED"]       = "+%s записан",
-    ["EXPENSE_LOGGED"]      = "-%s записан",
-
-    -- Chart
-    ["HEADER_CHART"]        = "График по дням",
-    ["CHART_DAY"]           = "День %d",
-    ["CHART_7D"]            = "7 дней",
-    ["CHART_30D"]           = "30 дней",
-    ["CHART_ALL"]           = "Всё",
-
-    -- Filter
-    ["FILTER_ALL"]          = "Все",
-
-    -- Source categories
-    ["SRC_VENDOR"]          = "Вендор",
-    ["SRC_AH"]              = "АХ",
-    ["SRC_MAIL"]            = "Почта",
-    ["SRC_QUEST"]           = "Квест",
-    ["SRC_LOOT"]            = "Лут",
-    ["SRC_TRADE"]           = "Обмен",
-    ["SRC_REPAIR"]          = "Ремонт",
-    ["SRC_UNKNOWN"]         = "Другое",
-    ["SRC_BANK"]            = "Банк",
-    ["SRC_GUILDBANK"]       = "Гильдия",
-
-    -- Warband bank
-    ["WARBAND_BANK"]        = "Банк отряда",
-    ["WARBAND_BANK_LINE"]   = "Банк отряда: %s",
-
-    -- Goal
-    ["HEADER_GOAL"]          = "Цель",
-    ["GOAL_SET"]             = "Цель: %s",
-    ["GOAL_CLEARED"]         = "Цель сброшена.",
-    ["GOAL_REACHED"]         = "Цель достигнута!",
-    ["GOAL_REMAINING"]       = "~%d дн. осталось",
-    ["GOAL_TOO_FAR"]         = "При текущем темпе — очень нескоро",
-    ["GOAL_SET_BUTTON"]      = "Установить цель",
-    ["GOAL_CHANGE_BUTTON"]   = "Изменить цель",
-    ["GOAL_USAGE"]           = "/cw goal <сумма в голде> | /cw goal clear",
-    ["GOAL_NONE"]            = "Нажмите для установки цели",
-    ["GOAL_CLICK_HINT"]      = "|cffffffffКлик|r — изменить цель",
-
-    -- Multi-character
-
-    -- Export
-
-    -- Source Breakdown
-
-    -- Characters tabs
-
-    -- Settings
-    ["SETTINGS_BUTTON"]      = "Настройки",
-    ["HEADER_SETTINGS"]      = "Настройки",
-    ["SETTINGS_MINIMAP"]     = "Показывать кнопку на миникарте",
-    ["SETTINGS_LANGUAGE"]    = "Язык",
-    ["SETTINGS_LANG_AUTO"]   = "Авто (язык игры)",
-    ["SETTINGS_LANG_EN"]     = "English",
-    ["SETTINGS_LANG_RU"]     = "Русский",
-    ["SETTINGS_RESET_SESSION"] = "Сбросить сессию",
-
-    -- History
-}
-
--------------------------------------------------------------------------------
--- Fallback mechanism via __index metamethod
--------------------------------------------------------------------------------
-local L = {}
-local activeLocale = GetLocale() == "ruRU" and "ruRU" or "enUS"
-
-setmetatable(L, {
+local L = setmetatable({}, {
     __index = function(_, key)
-        if activeLocale == "ruRU" then
-            return ruStrings[key] or defaultStrings[key] or key
-        else
-            return defaultStrings[key] or key
-        end
+        return defaultStrings[key] or key
     end
 })
-
---- Переключает язык (вызывается из Settings)
---- @param locale string "ruRU"|"enUS"|nil (nil = авто)
-function L:SetLocale(locale)
-    if locale == nil then
-        activeLocale = GetLocale() == "ruRU" and "ruRU" or "enUS"
-    else
-        activeLocale = locale
-    end
-end
-
---- Возвращает текущий язык
---- @return string
-function L:GetLocale()
-    return activeLocale
-end
 
 -------------------------------------------------------------------------------
 -- Export to addon namespace

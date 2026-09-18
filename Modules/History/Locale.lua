@@ -21,36 +21,7 @@ local enUS = {
     HISTORY_NEXT         = "Next >",
 }
 
-local ruRU = {
-    HISTORY_BUTTON       = "История",
-    HISTORY_TITLE        = "История транзакций",
-    HISTORY_PAGE         = "Стр. %d/%d",
-    HISTORY_SHOWING      = "Показано %d-%d из %d",
-    HISTORY_MIN_AMOUNT   = "Мин. голда:",
-    HISTORY_TYPE_ALL     = "Все",
-    HISTORY_TYPE_INCOME  = "Доход",
-    HISTORY_TYPE_EXPENSE = "Расход",
-    HISTORY_TYPE_TRANSFER = "Перевод в банк",
-    HISTORY_NO_RESULTS   = "Нет транзакций по фильтру.",
-    HISTORY_PREV         = "< Назад",
-    HISTORY_NEXT         = "Далее >",
-}
-
-local L = {}
-local function getLocale()
-    if ns.L and ns.L.GetLocale then
-        return ns.L:GetLocale()
-    end
-    return GetLocale and GetLocale() == "ruRU" and "ruRU" or "enUS"
-end
-
-setmetatable(L, {
-    __index = function(_, key)
-        if getLocale() == "ruRU" then
-            return ruRU[key] or enUS[key] or key
-        end
-        return enUS[key] or key
-    end
-})
+-- English only; unknown keys fall back to the key itself
+local L = setmetatable({}, { __index = function(_, key) return enUS[key] or key end })
 
 ns.History.L = L

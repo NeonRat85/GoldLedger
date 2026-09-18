@@ -67,7 +67,7 @@ local function CreateMainFrame()
     local HEADER_Y = -28                 -- below native title bar (~22px + 4 padding)
     local headerRowRightOffset = -6      -- from frame's right edge
 
-    -- Кнопка "Настройки" (⚙) — RIGHTMOST
+    -- Settings button (⚙), rightmost
     local settingsBtn = coreUI:CreateButton(f, {
         label   = "|TInterface\\Buttons\\UI-OptionsButton:14:14|t",
         width   = 28, height = HEADER_BTN_H,
@@ -628,7 +628,7 @@ local function UpdateGoal()
         if goalInfo.estDays then
             -- Cap astronomical ETAs (tiny daily gain vs huge goal would
             -- otherwise show ~14M+ days). Anything past 4 digits is
-            -- "практически никогда" and just noisy in the UI.
+            -- "practically never" and just noisy in the UI.
             if goalInfo.estDays > 9999 then
                 mainFrame.goalEta:SetText(L["GOAL_TOO_FAR"])
             else

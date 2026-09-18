@@ -10,24 +10,7 @@ local enUS = {
     CHARS_MONTH_LABEL   = "This month",
 }
 
-local ruRU = {
-    CHARS_BUTTON        = "Персонажи",
-    CHARS_TITLE         = "Персонажи",
-    CHARS_ACCOUNT_TOTAL = "Итого по аккаунту",
-    CHARS_DAY_LABEL     = "Сегодня",
-    CHARS_WEEK_LABEL    = "За неделю",
-    CHARS_MONTH_LABEL   = "За месяц",
-}
-
-local L = {}
-local function getLocale()
-    if ns.L and ns.L.GetLocale then return ns.L:GetLocale() end
-    return GetLocale and GetLocale() == "ruRU" and "ruRU" or "enUS"
-end
-
-setmetatable(L, { __index = function(_, key)
-    if getLocale() == "ruRU" then return ruRU[key] or enUS[key] or key end
-    return enUS[key] or key
-end })
+-- English only; unknown keys fall back to the key itself
+local L = setmetatable({}, { __index = function(_, key) return enUS[key] or key end })
 
 ns.Characters.L = L

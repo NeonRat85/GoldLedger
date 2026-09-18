@@ -32,7 +32,7 @@ function Module:OnInitialize()
 end
 
 function Module:OnEnable()
-    -- Register header button (dynamic label — updates on language switch)
+    -- Register header button (label resolved when the header is built)
     if Copperwise.RegisterHeaderButton then
         Copperwise:RegisterHeaderButton("calculator", function()
             local L = ns.Calculator.L

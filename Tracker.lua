@@ -2,11 +2,11 @@
     Copperwise: Tracker.lua
     Patterns: Observer, State
 
-    Отслеживает изменения голды через WoW-ивенты:
-    - PLAYER_LOGIN → запоминает начальный баланс
-    - PLAYER_MONEY → вычисляет дельту, логирует через Data
-    - Контекстные ивенты → определяет источник (вендор, АХ, почта и т.д.)
-    - Callback система для уведомления UI об изменениях
+    Tracks gold changes through WoW events:
+    - PLAYER_LOGIN → remembers the starting balance
+    - PLAYER_MONEY → works out the change and logs it through Data
+    - Context events → work out the source (vendor, AH, mail, etc.)
+    - Callbacks that notify the UI of changes
 ]]
 
 local ADDON_NAME, ns = ...
@@ -19,11 +19,11 @@ Copperwise:RegisterModule("Tracker", Tracker)
 -------------------------------------------------------------------------------
 -- State
 -------------------------------------------------------------------------------
-local lastGold = 0          -- Последнее известное количество голды (copper)
-local isReady = false       -- Готов ли трекер (после PLAYER_LOGIN)
-local sessionIncome = 0     -- Доход за текущую сессию (copper)
-local sessionExpense = 0    -- Расход за текущую сессию (copper)
-local repairPending = false -- Флаг: была вызвана RepairAllItems()
+local lastGold = 0          -- Last known gold amount (copper)
+local isReady = false       -- Tracker ready (after PLAYER_LOGIN)
+local sessionIncome = 0     -- Income this session (copper)
+local sessionExpense = 0    -- Expense this session (copper)
+local repairPending = false -- Set when RepairAllItems() was called
 
 -- FIFO of mail snapshots captured by the TakeInboxMoney hook. Each PLAYER_MONEY
 -- at the mailbox consumes one entry — that lets us attribute income to the
@@ -37,12 +37,12 @@ local pendingBankOps = {}
 local BANK_OP_TIMEOUT = 10
 
 -------------------------------------------------------------------------------
--- State Pattern: контекст источника транзакции
--- Отслеживаем какой UI открыт, чтобы определить откуда пришли деньги
+-- State Pattern: transaction source context
+-- Tracks which UI is open, to tell where money came from
 -------------------------------------------------------------------------------
 local currentSource = "unknown"
 
--- Таблица: WoW event → source key
+-- Map: WoW event → source key
 local SOURCE_EVENTS = {
     -- Vendor
     MERCHANT_SHOW           = "vendor",
@@ -74,13 +74,13 @@ local SOURCE_EVENTS = {
     GUILDBANKFRAME_CLOSED   = "clear",
 }
 
---- Возвращает текущий определённый источник
+--- Returns the current source
 --- @return string source key
 function Tracker:GetCurrentSource()
     return currentSource
 end
 
---- Locale key для источника
+--- Locale key for a source
 --- @param source string
 --- @return string
 function Tracker:GetSourceLocaleKey(source)
@@ -100,17 +100,17 @@ function Tracker:GetSourceLocaleKey(source)
 end
 
 -------------------------------------------------------------------------------
--- Observer: callbacks при изменении голды
+-- Observer: gold change callbacks
 -------------------------------------------------------------------------------
 local changeCallbacks = {}
 
---- Регистрирует callback на изменение голды
+--- Registers a gold change callback
 --- @param callback function(amount, entryType, newTotal, source)
 function Tracker:OnGoldChanged(callback)
     table.insert(changeCallbacks, callback)
 end
 
---- Уведомляет всех подписчиков об изменении
+--- Notifies every subscriber of a change
 local function NotifyChange(amount, entryType, newTotal, source)
     for _, callback in ipairs(changeCallbacks) do
         callback(amount, entryType, newTotal, source)
@@ -129,7 +129,7 @@ function Tracker:GetLastGold()
     return lastGold
 end
 
---- Статистика текущей сессии
+--- Current session stats
 --- @return table {income, expense, net}
 function Tracker:GetSessionStats()
     return {
@@ -302,7 +302,7 @@ local function ResolveVendorSales()
     end
 end
 
---- Обрабатывает изменение голды
+--- Handles a gold change
 local function ProcessGoldChange()
     if not isReady then return end
 
@@ -335,39 +335,39 @@ local function ProcessGoldChange()
         source = "guildbank"
     end
 
-    -- Детект ремонта: если у вендора, расход и был вызван RepairAllItems()
+    -- Repair detection: at a vendor, spending, and RepairAllItems() was called
     if source == "vendor" and entryType == "expense" and repairPending then
         source = "repair"
         repairPending = false
     end
 
-    -- Детект АХ-почты: смотрим ровно то письмо, по которому игрок только что
-    -- кликнул "Получить деньги" (захвачено хуком на TakeInboxMoney). Если
-    -- сумма мейла не совпадает с дельтой — это не наш мейл (третий аддон,
-    -- multiple takes одновременно и т.п.), оставляем source="mail".
+    -- AH mail detection: look at exactly the mail the player just
+    -- took money from (captured by the TakeInboxMoney hook). If
+    -- the mail amount doesn't match the change, it isn't this mail (another addon,
+    -- several takes at once, etc.), so keep source="mail".
     if source == "mail" and entryType == "income" then
         local mail = table.remove(pendingMailQueue, 1)
         if mail and mail.money and mail.money == absAmount then
-            -- Точное совпадение по сумме: это именно тот мейл.
+            -- Exact amount match: this is the mail.
             local senderEq = AUCTION_HOUSE_MAIL_SELLER and mail.sender == AUCTION_HOUSE_MAIL_SELLER
             if senderEq then
                 source = "ah"
                 Copperwise:Debug("Tracker", "AH mail (exact sender):", mail.sender)
             end
         end
-        -- Если очередь пуста (просроченный мейл вернул голд автоматически),
-        -- или сумма не сошлась — остаёмся "mail". Это лучше чем ложно
-        -- приписать доход к АХ.
+        -- If the queue is empty (an expired mail returned gold automatically)
+        -- or the amount didn't match, stay "mail". Better than wrongly
+        -- crediting the income to the AH.
     end
 
-    -- Обновляем статистику сессии
+    -- Update session stats
     if entryType == "income" then
         sessionIncome = sessionIncome + absAmount
     else
         sessionExpense = sessionExpense + absAmount
     end
 
-    -- Квест-контекст сбрасывается сразу после одной транзакции
+    -- Quest context resets after a single transaction
     if currentSource == "quest" then
         currentSource = "unknown"
     end
@@ -380,11 +380,11 @@ local function ProcessGoldChange()
         "| after:", currentGold
     )
 
-    -- Логируем через Data
+    -- Log through Data
     local Data = Copperwise:GetModule("Data")
     local entry = Data and Data:AddEntry(delta, source)
 
-    -- Уведомляем подписчиков
+    -- Notify subscribers
     NotifyChange(absAmount, entryType, currentGold, source)
 
     lastGold = currentGold
@@ -406,15 +406,15 @@ function Tracker:OnEnable()
 
     Copperwise:Debug("Tracker", "Ready | starting gold:", lastGold)
 
-    -- Хук на RepairAllItems() для отделения ремонта от покупок у вендора
+    -- Hook RepairAllItems() to tell repairs apart from vendor purchases
     hooksecurefunc("RepairAllItems", function()
         repairPending = true
         Copperwise:Debug("Tracker", "RepairAllItems() called — repair pending")
     end)
 
-    -- Хук на TakeInboxMoney(index) — захватываем sender/subject/money мейла
-    -- ДО того как он исчезнет из инбокса. Поддерживает Open All Mail (несколько
-    -- последовательных вызовов) через FIFO-очередь.
+    -- Hook TakeInboxMoney(index): capture the mail's sender/subject/money
+    -- BEFORE it leaves the inbox. Supports Open All Mail (several
+    -- calls in a row) through a FIFO queue.
     hooksecurefunc("TakeInboxMoney", function(index)
         local _, _, sender, subject, money = GetInboxHeaderInfo(index)
         if money and money > 0 then
@@ -461,12 +461,12 @@ function Tracker:OnEnable()
     Copperwise:RegisterEvent("MERCHANT_UPDATE", ResolveVendorSales)
     Copperwise:RegisterEvent("MERCHANT_CLOSED", function() wipe(pendingVendorSales) end)
 
-    -- Подписка на изменение голды
+    -- Subscribe to gold changes
     Copperwise:RegisterEvent("PLAYER_MONEY", function()
         ProcessGoldChange()
     end)
 
-    -- Подписка на контекстные ивенты для определения источника
+    -- Subscribe to context events to work out the source
     for event, sourceKey in pairs(SOURCE_EVENTS) do
         Copperwise:RegisterEvent(event, function()
             if sourceKey == "clear" then

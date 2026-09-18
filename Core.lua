@@ -2,18 +2,18 @@
     Copperwise: Core.lua
     Patterns: Module, Observer (Event Bus), Singleton
 
-    Ядро аддона:
-    - Module system для регистрации и доступа к модулям
-    - Event bus с dispatch-таблицей (Observer pattern)
-    - Slash-команды /cw и /copperwise
-    - Инициализация при ADDON_LOADED
+    Addon core:
+    - Module system for registering and accessing modules
+    - Event bus with a dispatch table (Observer pattern)
+    - Slash commands /cw and /copperwise
+    - Initialisation on ADDON_LOADED
 ]]
 
 local ADDON_NAME, ns = ...
 local L = ns.L
 
 -------------------------------------------------------------------------------
--- Singleton: глобальный namespace аддона
+-- Singleton: the addon's global namespace
 -------------------------------------------------------------------------------
 local Copperwise = {}
 Copperwise.name = ADDON_NAME
@@ -24,13 +24,13 @@ _G.Copperwise = Copperwise
 ns.Copperwise = Copperwise
 
 -------------------------------------------------------------------------------
--- Module Pattern: регистрация и доступ к модулям
+-- Module Pattern: registering and accessing modules
 -------------------------------------------------------------------------------
 local modules = {}
 
---- Регистрирует модуль в системе
---- @param name string Имя модуля
---- @param module table Таблица модуля
+--- Registers a module
+--- @param name string Module name
+--- @param module table Module table
 function Copperwise:RegisterModule(name, module)
     if modules[name] then
         error(("Copperwise: Module '%s' already registered"):format(name))
@@ -40,16 +40,16 @@ function Copperwise:RegisterModule(name, module)
     return module
 end
 
---- Возвращает зарегистрированный модуль
---- @param name string Имя модуля
+--- Returns a registered module
+--- @param name string Module name
 --- @return table|nil
 function Copperwise:GetModule(name)
     return modules[name]
 end
 
---- Вызывает метод на всех модулях (если метод существует)
---- @param method string Имя метода
---- @param ... any Аргументы
+--- Calls a method on every module that has it
+--- @param method string Method name
+--- @param ... any Arguments
 function Copperwise:CallModules(method, ...)
     for _, mod in pairs(modules) do
         if type(mod[method]) == "function" then
@@ -59,14 +59,14 @@ function Copperwise:CallModules(method, ...)
 end
 
 -------------------------------------------------------------------------------
--- Observer Pattern: Event Bus с dispatch-таблицей
+-- Observer Pattern: event bus with a dispatch table
 -------------------------------------------------------------------------------
 local eventFrame = CreateFrame("Frame")
 local eventHandlers = {} -- { [event] = { callback1, callback2, ... } }
 
---- Регистрирует обработчик WoW-ивента
+--- Registers a handler for a WoW event
 --- @param event string WoW event name
---- @param callback function Обработчик
+--- @param callback function Handler
 function Copperwise:RegisterEvent(event, callback)
     if not eventHandlers[event] then
         eventHandlers[event] = {}
@@ -75,14 +75,14 @@ function Copperwise:RegisterEvent(event, callback)
     table.insert(eventHandlers[event], callback)
 end
 
---- Снимает все обработчики ивента
+--- Removes all handlers for an event
 --- @param event string WoW event name
 function Copperwise:UnregisterEvent(event)
     eventHandlers[event] = nil
     eventFrame:UnregisterEvent(event)
 end
 
--- Центральный dispatch: один OnEvent для всех ивентов
+-- Central dispatch: one OnEvent for every event
 eventFrame:SetScript("OnEvent", function(_, event, ...)
     local handlers = eventHandlers[event]
     if handlers then
@@ -131,26 +131,12 @@ function Copperwise.Events:Emit(name, data)
 end
 
 -------------------------------------------------------------------------------
--- CreateLocale: helper to build a localized table for feature modules
--- Usage: local L = Copperwise:CreateLocale({ enUS = {...}, ruRU = {...} })
--- Reads current language from core Locale module (ns.L:GetLocale()).
+-- CreateLocale: helper to build a string table for feature modules
+-- Usage: local L = Copperwise:CreateLocale({ enUS = {...} })
 -------------------------------------------------------------------------------
 function Copperwise:CreateLocale(tables)
-    local L = {}
     local enUS = tables.enUS or {}
-    local ruRU = tables.ruRU or enUS
-    local function getLocale()
-        local coreL = ns.L
-        if coreL and coreL.GetLocale then return coreL:GetLocale() end
-        return GetLocale and GetLocale() == "ruRU" and "ruRU" or "enUS"
-    end
-    setmetatable(L, { __index = function(_, key)
-        if getLocale() == "ruRU" then
-            return ruRU[key] or enUS[key] or key
-        end
-        return enUS[key] or key
-    end })
-    return L
+    return setmetatable({}, { __index = function(_, key) return enUS[key] or key end })
 end
 
 -------------------------------------------------------------------------------
@@ -159,21 +145,21 @@ end
 Copperwise:RegisterEvent("ADDON_LOADED", function(event, loadedAddon)
     if loadedAddon ~= ADDON_NAME then return end
 
-    -- Инициализация SavedVariables с defaults
+    -- SavedVariables initialisation with defaults
     Copperwise:CallModules("OnInitialize")
     -- Feature modules init (loaded after core via .toc order)
     Copperwise:CallFeatures("OnInitialize")
 
-    -- Приветственное сообщение (отложено чтобы избежать taint)
+    -- Welcome message (deferred to avoid taint)
     C_Timer.After(0, function()
         print(L["ADDON_LOADED"])
     end)
 
-    -- Больше не нужен этот ивент
+    -- This event is no longer needed
     Copperwise:UnregisterEvent("ADDON_LOADED")
 end)
 
--- PLAYER_LOGIN: модули могут подключиться к игровым данным
+-- PLAYER_LOGIN: modules can now access game data
 Copperwise:RegisterEvent("PLAYER_LOGIN", function()
     Copperwise:CallModules("OnEnable")
     Copperwise:CallFeatures("OnEnable")
@@ -187,21 +173,21 @@ local features = {}
 local featureSlashCommands = {}
 local headerButtons = {}
 
---- Регистрирует feature-модуль (для фич, не инфраструктуры)
---- @param name string Уникальное имя фичи (e.g. "auction")
---- @param module table Таблица модуля с OnInitialize/OnEnable callbacks
+--- Registers a feature module (features, not infrastructure)
+--- @param name string Unique feature name (e.g. "auction")
+--- @param module table Module table with OnInitialize/OnEnable callbacks
 function Copperwise:RegisterFeature(name, module)
     features[name] = module
     module.name = name
     return module
 end
 
---- Возвращает feature-модуль по имени
+--- Returns a feature module by name
 function Copperwise:GetFeature(name)
     return features[name]
 end
 
---- Вызывает метод на всех feature-модулях
+--- Calls a method on every feature module
 function Copperwise:CallFeatures(method, ...)
     for _, mod in pairs(features) do
         if type(mod[method]) == "function" then
@@ -210,21 +196,21 @@ function Copperwise:CallFeatures(method, ...)
     end
 end
 
---- Регистрирует slash-подкоманду /cw <subcommand> для feature-модуля
+--- Registers a /cw <subcommand> for a feature module
 function Copperwise:RegisterSlashCommand(subcommand, callback)
     featureSlashCommands[subcommand:lower()] = callback
 end
 
---- Регистрирует кнопку в header bar главного окна
---- @param name string ID кнопки
---- @param label string|function Текст кнопки или функция возвращающая текст (для динамической локализации)
+--- Registers a button in the main window's header bar
+--- @param name string Button ID
+--- @param label string|function Button text, or a function returning it
 --- @param callback function OnClick handler
 function Copperwise:RegisterHeaderButton(name, label, callback)
     headerButtons[#headerButtons + 1] = { name = name, label = label, callback = callback }
 end
 
---- Снимает регистрацию header-кнопки по имени.
---- @return boolean true если кнопка найдена и удалена
+--- Unregisters a header button by name.
+--- @return boolean true if the button was found and removed
 function Copperwise:UnregisterHeaderButton(name)
     for i, btn in ipairs(headerButtons) do
         if btn.name == name then
@@ -235,24 +221,24 @@ function Copperwise:UnregisterHeaderButton(name)
     return false
 end
 
---- Снимает регистрацию slash-подкоманды.
+--- Unregisters a slash subcommand.
 function Copperwise:UnregisterSlashCommand(subcommand)
     if subcommand then
         featureSlashCommands[subcommand:lower()] = nil
     end
 end
 
---- Снимает регистрацию feature-модуля + чистит его header buttons и slash commands.
---- Используется при runtime-выключении фичи (без перезагрузки UI).
+--- Unregisters a feature module and removes its header buttons and slash commands.
+--- Used to switch a feature off at runtime (without a UI reload).
 function Copperwise:UnregisterFeature(name)
     if not features[name] then return false end
     features[name] = nil
-    -- Header buttons часто регистрируются с тем же ключом что и feature
+    -- Header buttons are often registered under the same key as the feature
     self:UnregisterHeaderButton(name)
     return true
 end
 
---- Возвращает зарегистрированные header buttons (для UI/MainFrame)
+--- Returns the registered header buttons (for UI/MainFrame)
 function Copperwise:GetHeaderButtons()
     return headerButtons
 end
@@ -269,10 +255,10 @@ local debugMode = false
 SLASH_COPPERWISE1 = "/cw"
 SLASH_COPPERWISE2 = "/copperwise"
 
---- Ищет feature slash callback по cmd. Поддерживает два варианта:
----   1. Точное совпадение  ("calc" → featureSlashCommands["calc"])
----   2. Префикс с пробелом  ("goal 1000" → featureSlashCommands["goal"], arg = "1000")
---- Возвращает (callback, arg_string_or_nil) либо nil.
+--- Finds a feature slash callback for cmd. Two forms are supported:
+---   1. Exact match         ("calc" → featureSlashCommands["calc"])
+---   2. Prefix and a space  ("goal 1000" → featureSlashCommands["goal"], arg = "1000")
+--- Returns (callback, arg_string_or_nil), or nil.
 local function findFeatureSlash(cmd)
     if featureSlashCommands[cmd] then
         return featureSlashCommands[cmd], nil
@@ -336,15 +322,15 @@ end
 -- Debug System (debugMode local is declared above the slash handler)
 -------------------------------------------------------------------------------
 
---- Включает/выключает debug-режим
+--- Turns debug mode on or off
 function Copperwise:SetDebug(enabled)
     debugMode = enabled
     print("|cffb87333Copperwise:|r debug " .. (enabled and "|cff00ff00ON|r" or "|cffff4444OFF|r"))
 end
 
---- Выводит debug-сообщение в чат (только если debug включён)
---- @param module string Имя модуля
---- @param ... any Аргументы для конкатенации
+--- Prints a debug message to chat (only when debug is on)
+--- @param module string Module name
+--- @param ... any Values to join
 function Copperwise:Debug(module, ...)
     if not debugMode then return end
 
@@ -357,9 +343,9 @@ function Copperwise:Debug(module, ...)
     print(("|cff888888[GL:%s]|r %s"):format(module, table.concat(parts, " ")))
 end
 
---- Дамп таблицы в чат (debug-режим)
---- @param label string Название
---- @param tbl table Таблица для вывода
+--- Dumps a table to chat (debug mode)
+--- @param label string Label
+--- @param tbl table Table to print
 function Copperwise:DumpTable(label, tbl)
     if not debugMode then return end
 
@@ -378,25 +364,6 @@ function Copperwise:DumpTable(label, tbl)
 end
 
 -------------------------------------------------------------------------------
--- LANGUAGE_CHANGED: tear down all module/feature frames so the next Toggle
--- recreates them with fresh localized strings. Generic — iterates the ns
--- namespace and looks for the convention <ns.X.Frame>.SetFrame; new feature
--- modules get this for free without touching core.
--------------------------------------------------------------------------------
-Copperwise.Events:On("LANGUAGE_CHANGED", function()
-    local function teardown(target)
-        if not target or type(target.SetFrame) ~= "function" then return end
-        local f = type(target.GetFrame) == "function" and target.GetFrame() or nil
-        if f and type(f.Hide) == "function" then f:Hide() end
-        target.SetFrame(nil)
-    end
-    for _, t in pairs(ns) do
-        if type(t) == "table" then teardown(t.Frame) end
-    end
-    teardown(ns.UI_MainFrame)
-end)
-
--------------------------------------------------------------------------------
--- Utility: передаём L в namespace для удобства
+-- Utility: expose L on the namespace for convenience
 -------------------------------------------------------------------------------
 Copperwise.L = L
