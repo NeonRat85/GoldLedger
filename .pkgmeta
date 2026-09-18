@@ -1,0 +1,13 @@
+# BigWigsMods/packager configuration (CurseForge / Wago releases)
+package-as: Copperwise
+
+ignore:
+  - tests
+  - .github
+  - .gitattributes
+  - .gitignore
+  - .pkgmeta
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown

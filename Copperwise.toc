@@ -6,6 +6,7 @@
 ## SavedVariables: CopperwiseDB
 ## IconTexture: Interface\Icons\INV_Misc_Coin_05
 ## X-Website: https://github.com/NeonRat85/Copperwise
+## X-Curse-Project-ID: 1701196
 ## X-Credits: Based on GoldLedger by tum24 (https://www.curseforge.com/wow/addons/goldledger), MIT License
 ## X-License: MIT
 
