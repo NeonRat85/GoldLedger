@@ -68,7 +68,7 @@ load("Libs/LibDBIcon-1.0/LibDBIcon-1.0.lua")
 local toggled = 0
 local ns = {
     L = setmetatable({}, { __index = function(_, k) return k end }),
-    UI_Helpers = { GoldFormatter = { Full = function(c) return tostring(c) end } },
+    UI_Helpers = { GoldFormatter = { Full = function(c) return tostring(math.abs(c)) end } },  -- like the real one: unsigned
 }
 ns.GoldLedger = {
     RegisterFeature = function(_, _, m) ns.feature = m end,
@@ -116,6 +116,8 @@ local text = table.concat(tooltipLines, "|")
 check("tooltip has today/month/bank values",
     text:find("HEADER_INCOME=11", 1, true) and text:find("HEADER_EXPENSE=44", 1, true)
     and text:find("WARBAND_BANK=55", 1, true))
+check("tooltip totals: today -11, month -11",
+    text:find("HEADER_EXPENSE=22|TOOLTIP_TOTAL=-11", 1, true) and text:find("HEADER_EXPENSE=44|TOOLTIP_TOTAL=-11", 1, true))
 
 dataObject.OnClick(button, "LeftButton")
 check("click toggles main window", toggled == 1)

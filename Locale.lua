@@ -36,6 +36,7 @@ local defaultStrings = {
     ["TOOLTIP_HINT"]        = "|cffffffffClick|r to toggle window",
     ["TOOLTIP_TODAY"]       = "Today",
     ["TOOLTIP_MONTH"]       = "This Month",
+    ["TOOLTIP_TOTAL"]       = "Total",
 
     -- Gold formatting
     ["GOLD_ABBR"]           = "g",
@@ -137,6 +138,7 @@ local ruStrings = {
     ["TOOLTIP_HINT"]        = "|cffffffffКлик|r — открыть окно",
     ["TOOLTIP_TODAY"]       = "Сегодня",
     ["TOOLTIP_MONTH"]       = "Этот месяц",
+    ["TOOLTIP_TOTAL"]       = "Итого",
 
     -- Gold formatting
     ["GOLD_ABBR"]           = "з",

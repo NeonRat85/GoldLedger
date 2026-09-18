@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Total line in the minimap tooltip** for Today and This Month: income minus
+  expense, green when positive and red when negative.
 - `tests/globals.lua`, run in CI, fails if GoldLedger's code assigns any
   global it doesn't own.
 

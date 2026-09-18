@@ -33,6 +33,16 @@ local function AddValueLine(tooltip, label, text, valueKey)
     tooltip:AddDoubleLine(label, text, lc[1], lc[2], lc[3], vc[1], vc[2], vc[3])
 end
 
+--- Income, expense and their total (net) for one period
+local function AddPeriodLines(tooltip, summary, GoldFormatter)
+    AddValueLine(tooltip, L and L["HEADER_INCOME"] or "Income", GoldFormatter.Full(summary.income), "INCOME")
+    AddValueLine(tooltip, L and L["HEADER_EXPENSE"] or "Expense", GoldFormatter.Full(summary.expense), "EXPENSE")
+    local net = summary.income - summary.expense
+    AddValueLine(tooltip, L and L["TOOLTIP_TOTAL"] or "Total",
+        (net < 0 and "-" or "+") .. GoldFormatter.Full(net),
+        net < 0 and "BALANCE_NEG" or "BALANCE_POS")
+end
+
 local function OnTooltipShow(tooltip)
     tooltip:AddLine(L and L["TOOLTIP_TITLE"] or "GoldLedger", 1, 0.84, 0)
 
@@ -43,14 +53,12 @@ local function OnTooltipShow(tooltip)
         local today = Data:GetDailySummary()
         tooltip:AddLine(" ")
         tooltip:AddLine(L and L["TOOLTIP_TODAY"] or "Today", 1, 1, 1)
-        AddValueLine(tooltip, L and L["HEADER_INCOME"] or "Income", GoldFormatter.Full(today.income), "INCOME")
-        AddValueLine(tooltip, L and L["HEADER_EXPENSE"] or "Expense", GoldFormatter.Full(today.expense), "EXPENSE")
+        AddPeriodLines(tooltip, today, GoldFormatter)
 
         local month = Data:GetMonthlySummary()
         tooltip:AddLine(" ")
         tooltip:AddLine(L and L["TOOLTIP_MONTH"] or "This Month", 1, 1, 1)
-        AddValueLine(tooltip, L and L["HEADER_INCOME"] or "Income", GoldFormatter.Full(month.income), "INCOME")
-        AddValueLine(tooltip, L and L["HEADER_EXPENSE"] or "Expense", GoldFormatter.Full(month.expense), "EXPENSE")
+        AddPeriodLines(tooltip, month, GoldFormatter)
 
         tooltip:AddLine(" ")
         AddValueLine(tooltip, L and L["WARBAND_BANK"] or "Warband Bank",
